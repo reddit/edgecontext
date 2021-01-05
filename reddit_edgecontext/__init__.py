@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import re
 
@@ -10,19 +12,20 @@ from typing import Set
 
 import jwt
 
+from baseplate import RequestContext
+from baseplate.lib import cached_property
+from baseplate.lib.edgecontext import EdgeContextFactory as BaseEdgeContextFactory
+from baseplate.lib.secrets import SecretsStore
 from jwt.algorithms import get_default_algorithms
 from thrift import TSerialization
 from thrift.protocol.TBinaryProtocol import TBinaryProtocolAcceleratedFactory
 
-from baseplate import RequestContext
-from baseplate.lib import cached_property
-from baseplate.lib.secrets import SecretsStore
-from baseplate.thrift.ttypes import Device as TDevice
-from baseplate.thrift.ttypes import Geolocation as TGeolocation
-from baseplate.thrift.ttypes import Loid as TLoid
-from baseplate.thrift.ttypes import OriginService as TOriginService
-from baseplate.thrift.ttypes import Request as TRequest
-from baseplate.thrift.ttypes import Session as TSession
+from reddit_edgecontext.thrift.ttypes import Device as TDevice
+from reddit_edgecontext.thrift.ttypes import Geolocation as TGeolocation
+from reddit_edgecontext.thrift.ttypes import Loid as TLoid
+from reddit_edgecontext.thrift.ttypes import OriginService as TOriginService
+from reddit_edgecontext.thrift.ttypes import Request as TRequest
+from reddit_edgecontext.thrift.ttypes import Session as TSession
 
 
 logger = logging.getLogger(__name__)
@@ -46,7 +49,7 @@ class AuthenticationTokenValidator:
         self._cache_mtime = 0.0
         self._public_keys: List[Any] = []
 
-    def validate(self, token: bytes) -> "AuthenticationToken":
+    def validate(self, token: str) -> AuthenticationToken:
         """Validate a raw authentication token and return an object.
 
         :param token: token value originating from the Authentication service
@@ -63,7 +66,7 @@ class AuthenticationTokenValidator:
 
         for public_key in self._public_keys:
             try:
-                decoded = jwt.decode(token, public_key, algorithms=self._algorithm_name)
+                decoded = jwt.decode(token, public_key, algorithms=[self._algorithm_name])
                 return ValidatedAuthenticationToken(decoded)
             except jwt.ExpiredSignatureError:
                 return InvalidAuthenticationToken()
@@ -76,7 +79,7 @@ class AuthenticationTokenValidator:
 class AuthenticationToken:
     """Information about the authenticated user.
 
-    :py:class:`EdgeRequestContext` provides high-level helpers for extracting
+    :py:class:`EdgeContext` provides high-level helpers for extracting
     data from authentication tokens. Use those instead of direct access through
     this class.
 
@@ -87,7 +90,7 @@ class AuthenticationToken:
         """Return the raw `subject` that is authenticated."""
         raise NotImplementedError
 
-    @property
+    @cached_property
     def user_roles(self) -> Set[str]:
         raise NotImplementedError
 
@@ -121,7 +124,7 @@ class ValidatedAuthenticationToken(AuthenticationToken):
         return self.payload.get("sub")
 
     @cached_property
-    def user_roles(self) -> Set[str]:  # type: ignore # pylint: disable=W0236
+    def user_roles(self) -> Set[str]:
         return set(self.payload.get("roles", []))
 
     @property
@@ -150,7 +153,7 @@ class InvalidAuthenticationToken(AuthenticationToken):
     def subject(self) -> Optional[str]:
         raise NoAuthenticationError
 
-    @property
+    @cached_property
     def user_roles(self) -> Set[str]:
         raise NoAuthenticationError
 
@@ -176,25 +179,25 @@ class InvalidAuthenticationToken(AuthenticationToken):
 
 
 class Session(NamedTuple):
-    """Wrapper for the session values in the EdgeRequestContext."""
+    """Wrapper for the session values in the EdgeContext."""
 
     id: str
 
 
 class Device(NamedTuple):
-    """Wrapper for the device values in the EdgeRequestContext."""
+    """Wrapper for the device values in the EdgeContext."""
 
     id: str
 
 
 class OriginService(NamedTuple):
-    """Wrapper for the origin values in the EdgeRequestContext."""
+    """Wrapper for the origin values in the EdgeContext."""
 
     name: str
 
 
 class Geolocation(NamedTuple):
-    """Wrapper for the geolocation values in the EdgeRequestContext."""
+    """Wrapper for the geolocation values in the EdgeContext."""
 
     country_code: str
 
@@ -341,8 +344,101 @@ class Service(NamedTuple):
         return name
 
 
-class EdgeRequestContextFactory:
-    """Factory for creating :py:class:`EdgeRequestContext` objects.
+class EdgeContext:
+    """Contextual information about the initial request to an edge service.
+
+    Construct this using an
+    :py:class:`~reddit_edgecontext.EdgeContextFactory`.
+
+    """
+
+    _HEADER_PROTOCOL_FACTORY = TBinaryProtocolAcceleratedFactory()
+
+    def __init__(
+        self, authn_token_validator: AuthenticationTokenValidator, header: Optional[bytes]
+    ):
+        self._authn_token_validator = authn_token_validator
+        self._header = header
+
+    def attach_context(self, context: RequestContext) -> None:
+        """Attach this to the provided :py:class:`~baseplate.RequestContext`.
+
+        :param context: request context to attach this to
+
+        """
+        context.request_context = self
+        context.raw_request_context = self._header
+
+    def event_fields(self) -> Dict[str, Any]:
+        """Return fields to be added to events."""
+        fields = {"session_id": self.session.id}
+        if self.device.id:
+            fields["device_id"] = self.device.id
+        fields.update(self.user.event_fields())
+        fields.update(self.oauth_client.event_fields())
+        return fields
+
+    @cached_property
+    def authentication_token(self) -> AuthenticationToken:
+        return self._authn_token_validator.validate(self._t_request.authentication_token)
+
+    @cached_property
+    def user(self) -> User:
+        """:py:class:`~reddit_edgecontext.User` object for the current context."""
+        return User(
+            authentication_token=self.authentication_token,
+            loid=self._t_request.loid.id,
+            cookie_created_ms=self._t_request.loid.created_ms,
+        )
+
+    @cached_property
+    def oauth_client(self) -> OAuthClient:
+        """:py:class:`~reddit_edgecontext.OAuthClient` object for the current context."""
+        return OAuthClient(self.authentication_token)
+
+    @cached_property
+    def device(self) -> Device:
+        """:py:class:`~reddit_edgecontext.Device` object for the current context."""
+        return Device(id=self._t_request.device.id)
+
+    @cached_property
+    def session(self) -> Session:
+        """:py:class:`~reddit_edgecontext.Session` object for the current context."""
+        return Session(id=self._t_request.session.id)
+
+    @cached_property
+    def service(self) -> Service:
+        """:py:class:`~reddit_edgecontext.Service` object for the current context."""
+        return Service(self.authentication_token)
+
+    @cached_property
+    def origin_service(self) -> OriginService:
+        """:py:class:`~reddit_edgecontext.Origin` object for the current context."""
+        return OriginService(self._t_request.origin_service.name)
+
+    @cached_property
+    def geolocation(self) -> Geolocation:
+        """:py:class:`~reddit_edgecontext.Geolocation` object for the current context."""
+        return Geolocation(country_code=self._t_request.geolocation.country_code)
+
+    @cached_property
+    def _t_request(self) -> TRequest:
+        _t_request = TRequest()
+        _t_request.loid = TLoid()
+        _t_request.session = TSession()
+        _t_request.device = TDevice()
+        _t_request.origin_service = TOriginService()
+        _t_request.geolocation = TGeolocation()
+        if self._header:
+            try:
+                TSerialization.deserialize(_t_request, self._header, self._HEADER_PROTOCOL_FACTORY)
+            except Exception:
+                logger.debug("Invalid Edge-Request header. %s", self._header)
+        return _t_request
+
+
+class EdgeContextFactory(BaseEdgeContextFactory):
+    """Factory for creating :py:class:`EdgeContext` objects.
 
     Every application should set one of these up. Edge services that talk
     directly with clients should use :py:meth:`new` directly. For internal
@@ -366,8 +462,8 @@ class EdgeRequestContextFactory:
         device_id: Optional[str] = None,
         origin_service_name: Optional[str] = None,
         country_code: Optional[str] = None,
-    ) -> "EdgeRequestContext":
-        """Return a new EdgeRequestContext object made from scratch.
+    ) -> EdgeContext:
+        """Return a new EdgeContext object made from scratch.
 
         Services at the edge that communicate directly with clients should use
         this to pass on the information they get to downstream services. They
@@ -426,16 +522,16 @@ class EdgeRequestContextFactory:
             origin_service=TOriginService(name=origin_service_name),
             geolocation=TGeolocation(country_code=country_code),
         )
-        header = TSerialization.serialize(t_request, EdgeRequestContext._HEADER_PROTOCOL_FACTORY)
+        header = TSerialization.serialize(t_request, EdgeContext._HEADER_PROTOCOL_FACTORY)
 
-        context = EdgeRequestContext(self.authn_token_validator, header)
+        context = EdgeContext(self.authn_token_validator, header)
         # Set the _t_request property so we can skip the deserialization step
         # since we already have the thrift object.
         context._t_request = t_request
         return context
 
-    def from_upstream(self, edge_header: Optional[bytes]) -> "EdgeRequestContext":
-        """Create and return an EdgeRequestContext from an upstream header.
+    def from_upstream(self, edge_header: Optional[bytes]) -> EdgeContext:
+        """Create and return an EdgeContext from an upstream header.
 
         This is generally used internally to Baseplate by framework
         integrations that automatically pick up context from inbound requests.
@@ -444,97 +540,4 @@ class EdgeRequestContextFactory:
             service.
 
         """
-        return EdgeRequestContext(self.authn_token_validator, edge_header)
-
-
-class EdgeRequestContext:
-    """Contextual information about the initial request to an edge service.
-
-    Construct this using an
-    :py:class:`~baseplate.lib.edge_context.EdgeRequestContextFactory`.
-
-    """
-
-    _HEADER_PROTOCOL_FACTORY = TBinaryProtocolAcceleratedFactory()
-
-    def __init__(
-        self, authn_token_validator: AuthenticationTokenValidator, header: Optional[bytes]
-    ):
-        self._authn_token_validator = authn_token_validator
-        self._header = header
-
-    def attach_context(self, context: RequestContext) -> None:
-        """Attach this to the provided :py:class:`~baseplate.RequestContext`.
-
-        :param context: request context to attach this to
-
-        """
-        context.request_context = self
-        context.raw_request_context = self._header
-
-    def event_fields(self) -> Dict[str, Any]:
-        """Return fields to be added to events."""
-        fields = {"session_id": self.session.id}
-        if self.device.id:
-            fields["device_id"] = self.device.id
-        fields.update(self.user.event_fields())
-        fields.update(self.oauth_client.event_fields())
-        return fields
-
-    @cached_property
-    def authentication_token(self) -> AuthenticationToken:
-        return self._authn_token_validator.validate(self._t_request.authentication_token)
-
-    @cached_property
-    def user(self) -> User:
-        """:py:class:`~baseplate.lib.edge_context.User` object for the current context."""
-        return User(
-            authentication_token=self.authentication_token,
-            loid=self._t_request.loid.id,
-            cookie_created_ms=self._t_request.loid.created_ms,
-        )
-
-    @cached_property
-    def oauth_client(self) -> OAuthClient:
-        """:py:class:`~baseplate.lib.edge_context.OAuthClient` object for the current context."""
-        return OAuthClient(self.authentication_token)
-
-    @cached_property
-    def device(self) -> Device:
-        """:py:class:`~baseplate.lib.edge_context.Device` object for the current context."""
-        return Device(id=self._t_request.device.id)
-
-    @cached_property
-    def session(self) -> Session:
-        """:py:class:`~baseplate.lib.edge_context.Session` object for the current context."""
-        return Session(id=self._t_request.session.id)
-
-    @cached_property
-    def service(self) -> Service:
-        """:py:class:`~baseplate.lib.edge_context.Service` object for the current context."""
-        return Service(self.authentication_token)
-
-    @cached_property
-    def origin_service(self) -> OriginService:
-        """:py:class:`~baseplate.lib.edge_context.Origin` object for the current context."""
-        return OriginService(self._t_request.origin_service.name)
-
-    @cached_property
-    def geolocation(self) -> Geolocation:
-        """:py:class:`~baseplate.core.Geolocation` object for the current context."""
-        return Geolocation(country_code=self._t_request.geolocation.country_code)
-
-    @cached_property
-    def _t_request(self) -> TRequest:  # pylint: disable=method-hidden
-        _t_request = TRequest()
-        _t_request.loid = TLoid()
-        _t_request.session = TSession()
-        _t_request.device = TDevice()
-        _t_request.origin_service = TOriginService()
-        _t_request.geolocation = TGeolocation()
-        if self._header:
-            try:
-                TSerialization.deserialize(_t_request, self._header, self._HEADER_PROTOCOL_FACTORY)
-            except Exception:
-                logger.debug("Invalid Edge-Request header. %s", self._header)
-        return _t_request
+        return EdgeContext(self.authn_token_validator, edge_header)

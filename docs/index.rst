@@ -1,7 +1,7 @@
-``baseplate.lib.edge_context``
-------------------------------
+``reddit_edgecontext``
+----------------------
 
-.. automodule:: baseplate.lib.edge_context
+.. automodule:: reddit_edgecontext
 
 The :py:class:`EdgeRequestContext` provides an interface into both
 authentication and context information about the original request from a user.
