@@ -1,4 +1,6 @@
 namespace py reddit_edgecontext.thrift
+namespace go reddit.edgecontext
+namespace java com.reddit.edgecontext
 
 /**A raw authentication token as returned by the authentication service.
 
