@@ -5,7 +5,7 @@ REORDER_PYTHON_IMPORTS := reorder-python-imports --py3-plus --separate-from-impo
 THRIFT := thrift
 
 
-thrift: $(SOURCE_ROOT)/thrift/__init__.py
+thrift: $(LIBRARY_ROOT)/thrift/__init__.py
 
 
 .PHONY: fmt
@@ -32,7 +32,7 @@ docs:
 	sphinx-build -M html docs/ build/
 
 
-$(SOURCE_ROOT)/thrift/__init__.py: $(SOURCE_ROOT)/edgecontext.thrift
+$(LIBRARY_ROOT)/thrift/__init__.py: $(LIBRARY_ROOT)/edgecontext.thrift
 	mkdir -p build/thrift/$<
 	$(THRIFT) -strict -gen py:slots -out build/thrift/$< $<
 	cp -r build/thrift/$</reddit_edgecontext/thrift/ reddit_edgecontext/

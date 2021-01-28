@@ -12,4 +12,4 @@ Sphinx==3.4.0
 sphinx-autodoc-typehints==1.11.1
 
 -f https://reddit-wheels.s3.amazonaws.com/index.html
-baseplate==1.4.1.dev12+g47ab443
+baseplate==1.5.2.dev12+gc7fd98c
