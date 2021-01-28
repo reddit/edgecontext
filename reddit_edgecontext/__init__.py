@@ -455,7 +455,7 @@ class EdgeContextFactory(BaseEdgeContextFactory):
 
     def new(
         self,
-        authentication_token: Optional[bytes] = None,
+        authentication_token: Optional[str] = None,
         loid_id: Optional[str] = None,
         loid_created_ms: Optional[int] = None,
         session_id: Optional[str] = None,
