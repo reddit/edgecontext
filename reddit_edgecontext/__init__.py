@@ -182,32 +182,41 @@ class Session(NamedTuple):
     """Wrapper for the session values in the EdgeContext."""
 
     id: str
+    """The ID of the session this request is part of."""
 
 
 class Device(NamedTuple):
     """Wrapper for the device values in the EdgeContext."""
 
     id: str
+    """The Device ID of the client."""
 
 
 class OriginService(NamedTuple):
     """Wrapper for the origin values in the EdgeContext."""
 
     name: str
+    """The name of the service which created the edge context payload."""
 
 
 class Geolocation(NamedTuple):
     """Wrapper for the geolocation values in the EdgeContext."""
 
     country_code: str
+    """The ISO-3166-1 alpha-2 country code from which the request came."""
 
 
 class User(NamedTuple):
     """Wrapper for the user values in AuthenticationToken and the LoId cookie."""
 
     authentication_token: AuthenticationToken
+    """The authentication provided for the request."""
+
     loid: str
+    """The LoID associated with the request, if applicable."""
+
     cookie_created_ms: int
+    """When the authentication cookie was created, if applicable."""
 
     @property
     def id(self) -> Optional[str]:
@@ -270,6 +279,7 @@ class OAuthClient(NamedTuple):
     """Wrapper for the OAuth2 client values in AuthenticationToken."""
 
     authentication_token: AuthenticationToken
+    """The authentication token for this request."""
 
     @property
     def id(self) -> Optional[str]:
@@ -325,6 +335,7 @@ class Service(NamedTuple):
     """Wrapper for the Service values in AuthenticationToken."""
 
     authentication_token: AuthenticationToken
+    """The authentication token for this request."""
 
     @property
     def name(self) -> str:
@@ -347,8 +358,8 @@ class Service(NamedTuple):
 class EdgeContext:
     """Contextual information about the initial request to an edge service.
 
-    Construct this using an
-    :py:class:`~reddit_edgecontext.EdgeContextFactory`.
+    Once the :py:class:`~reddit_edgecontext.EdgeContextFactory` is set up, an
+    instance of this object will be available at ``request.edge_context``.
 
     """
 
@@ -359,15 +370,6 @@ class EdgeContext:
     ):
         self._authn_token_validator = authn_token_validator
         self._header = header
-
-    def attach_context(self, context: RequestContext) -> None:
-        """Attach this to the provided :py:class:`~baseplate.RequestContext`.
-
-        :param context: request context to attach this to
-
-        """
-        context.request_context = self
-        context.raw_request_context = self._header
 
     def event_fields(self) -> Dict[str, Any]:
         """Return fields to be added to events."""
@@ -435,6 +437,15 @@ class EdgeContext:
             except Exception:
                 logger.debug("Invalid Edge-Request header. %s", self._header)
         return _t_request
+
+    def attach_context(self, context: RequestContext) -> None:
+        """Attach this to the provided :py:class:`~baseplate.RequestContext`.
+
+        :param context: request context to attach this to
+
+        """
+        context.request_context = self
+        context.raw_request_context = self._header
 
 
 class EdgeContextFactory(BaseEdgeContextFactory):
