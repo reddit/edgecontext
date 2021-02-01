@@ -1,6 +1,6 @@
 # edgecontext.py
 
-Documentation: https://reddit-edgecontext.readthedocs.io/en/stable/
+Documentation: https://reddit-edgecontext.readthedocs.io/en/latest/
 
 Services deep within the backend often need to know information about the
 client that originated the request, such as what user is authenticated or what
