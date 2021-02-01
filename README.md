@@ -41,7 +41,7 @@ def my_view(request):
 
 See [the documentation] for all the available fields.
 
-[the documentation]: https://reddit-edgecontext.readthedocs.io/en/stable/
+[the documentation]: https://reddit-edgecontext.readthedocs.io/en/latest/
 
 ## Development
 
