@@ -7,6 +7,9 @@ setup(
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/reddit/edgecontext.py",
+    project_urls={
+        "Documentation": "https://reddit-edgecontext.readthedocs.io/",
+    },
     author="reddit",
     license="BSD",
     use_scm_version=True,
