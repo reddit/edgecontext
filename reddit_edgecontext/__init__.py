@@ -444,8 +444,8 @@ class EdgeContext:
         :param context: request context to attach this to
 
         """
-        context.request_context = self
-        context.raw_request_context = self._header
+        context.edge_context = self
+        context.raw_edge_context = self._header
 
 
 class EdgeContextFactory(BaseEdgeContextFactory):
