@@ -6,7 +6,7 @@ setup(
     description="reddit edge request context baggage",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    url="https://github.com/reddit/edgecontext.py",
+    url="https://github.com/reddit/edgecontext",
     project_urls={
         "Documentation": "https://reddit-edgecontext.readthedocs.io/",
     },

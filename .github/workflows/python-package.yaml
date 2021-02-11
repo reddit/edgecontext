@@ -8,6 +8,9 @@ on:
 
 jobs:
   lint-and-test:
+    defaults:
+      run:
+        working-directory: lib/py/
 
     runs-on: ubuntu-latest
     strategy:
