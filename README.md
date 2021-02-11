@@ -1,6 +1,6 @@
-# edgecontext.py
+# edgecontext
 
-Documentation: https://reddit-edgecontext.readthedocs.io/en/latest/
+Python Documentation: https://reddit-edgecontext.readthedocs.io/en/latest/
 
 Services deep within the backend often need to know information about the
 client that originated the request, such as what user is authenticated or what
@@ -13,7 +13,7 @@ Baseplate.py.
 
 [`EdgeContextFactory`]: https://baseplate.readthedocs.io/en/latest/api/baseplate/lib/edgecontext.html
 
-## Usage
+## Python Usage
 
 Add the `EdgeContextFactory` to application startup:
 
@@ -66,8 +66,9 @@ The following make targets are provided:
 * `thrift`: Generate code from the Thrift IDL. Run `fmt` after doing this.
 * `lint`: Run linters on the code.
 * `test`: Run the test suite.
-* `docs`: Build the docs. Output can be found in `build/html/`.
+* `docs`: Build docs.
+    * Python output can be found in `lib/py/build/html/`.
 
 The generated Thrift code is committed to the Git repo, so if you change
-`reddit_edgecontext/edgecontext.thrift` make sure to run `make thrift fmt` and
-commit those changes as well.
+`edgecontext.thrift` make sure to run `make thrift fmt` and commit those
+changes as well.
