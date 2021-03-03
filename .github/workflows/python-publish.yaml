@@ -6,10 +6,6 @@ on:
 
 jobs:
   deploy:
-    defaults:
-      run:
-        working-directory: lib/py/
-
     runs-on: ubuntu-latest
 
     steps:
@@ -30,6 +26,7 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
       run: |
+        cd lib/py/
         python setup.py sdist bdist_wheel
         twine upload dist/*
 
