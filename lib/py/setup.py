@@ -12,7 +12,10 @@ setup(
     },
     author="reddit",
     license="BSD",
-    use_scm_version=True,
+    use_scm_version={
+        "root": "../../",
+        "relative_to": __file__,
+    },
     packages=find_packages(),
     python_requires=">=3.7",
     setup_requires=["setuptools_scm"],
