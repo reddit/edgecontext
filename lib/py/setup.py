@@ -4,7 +4,7 @@ from setuptools import setup
 setup(
     name="reddit_edgecontext",
     description="reddit edge request context baggage",
-    long_description=open("README.md").read(),
+    long_description=open("../../README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/reddit/edgecontext",
     project_urls={
