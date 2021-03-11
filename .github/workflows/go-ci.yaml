@@ -1,0 +1,44 @@
+name: Lint and Test Go
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  lint-and-test:
+    defaults:
+      run:
+        working-directory: lib/go/
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [1.16.2-buster]
+
+    container:
+      image: golang:${{ matrix.go-version }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          go mod download
+          go install golang.org/x/lint/golint@latest
+
+      - name: Lint
+        run: |
+          make lint
+
+      - name: Test
+        run: |
+          make test
+
+      - name: Go modules check
+        run: |
+          go mod tidy
+          git status
+          git diff
+          test -z "$(git status --porcelain)"
