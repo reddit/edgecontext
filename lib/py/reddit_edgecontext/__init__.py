@@ -290,9 +290,13 @@ class User(NamedTuple):
             return self.loid_
 
         # Finally, return loid from authentication token
-        loid = self.authentication_token.loid
-        if loid:
-            return loid
+        try:
+            loid = self.authentication_token.loid
+            if loid:
+                return loid
+        except NoAuthenticationError:
+            # self.authentication_token could be an InvalidAuthenticationToken
+            pass
 
         return ""
 
