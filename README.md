@@ -44,7 +44,7 @@ Then read fields while handling requests:
 
 ```python
 def my_view(request):
-    return request.edgecontext.user.id
+    return request.edge_context.user.id
 ```
 
 See [the documentation] for all the available fields.
