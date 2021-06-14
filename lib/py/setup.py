@@ -7,10 +7,15 @@ setup(
     long_description=open("../../README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/reddit/edgecontext",
-    project_urls={"Documentation": "https://reddit-edgecontext.readthedocs.io/"},
+    project_urls={
+        "Documentation": "https://reddit-edgecontext.readthedocs.io/",
+    },
     author="reddit",
     license="BSD",
-    use_scm_version={"root": "../../", "relative_to": __file__},
+    use_scm_version={
+        "root": "../../",
+        "relative_to": __file__,
+    },
     packages=find_packages(),
     python_requires=">=3.7",
     setup_requires=["setuptools_scm"],
