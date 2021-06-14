@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/apache/thrift/lib/go/thrift"
-	"github.com/gofrs/uuid"
 	"github.com/reddit/baseplate.go/ecinterface"
 	"github.com/reddit/baseplate.go/log"
 	"github.com/reddit/baseplate.go/secrets"
@@ -131,7 +130,7 @@ type NewArgs struct {
 
 	CountryCode string
 
-	RequestID uuid.UUID
+	RequestID string
 }
 
 // New creates a new EdgeRequestContext from scratch.
@@ -169,9 +168,9 @@ func New(ctx context.Context, impl *Impl, args NewArgs) (*EdgeRequestContext, er
 			CountryCode: ecthrift.CountryCode(args.CountryCode),
 		}
 	}
-	if args.RequestID != uuid.Nil {
+	if args.RequestID != "" {
 		request.RequestID = &ecthrift.RequestId{
-			ReadableID: args.RequestID.String(),
+			ReadableID: args.RequestID,
 		}
 	}
 	request.AuthenticationToken = ecthrift.AuthenticationToken(args.AuthToken)
@@ -220,10 +219,7 @@ func FromHeader(ctx context.Context, header string, impl *Impl) (*EdgeRequestCon
 		raw.CountryCode = string(request.Geolocation.CountryCode)
 	}
 	if request.RequestID != nil {
-		rid, err := uuid.FromString(request.RequestID.ReadableID)
-		if err == nil {
-			raw.RequestID = rid
-		}
+		raw.RequestID = request.RequestID.ReadableID
 	}
 	return &EdgeRequestContext{
 		impl:   impl,

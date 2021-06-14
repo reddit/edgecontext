@@ -165,7 +165,7 @@ func (os OriginService) Name() string {
 	return os.raw.OriginServiceName
 }
 
-// RequestID is id of this request.
-func (e *EdgeRequestContext) RequestID() uuid.UUID {
+// RequestID is the id of this request.
+func (e *EdgeRequestContext) RequestID() string {
 	return e.raw.RequestID
 }
