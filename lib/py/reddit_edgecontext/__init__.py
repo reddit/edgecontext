@@ -25,6 +25,7 @@ from reddit_edgecontext.thrift.ttypes import Geolocation as TGeolocation
 from reddit_edgecontext.thrift.ttypes import Loid as TLoid
 from reddit_edgecontext.thrift.ttypes import OriginService as TOriginService
 from reddit_edgecontext.thrift.ttypes import Request as TRequest
+from reddit_edgecontext.thrift.ttypes import RequestId as TRequestId
 from reddit_edgecontext.thrift.ttypes import Session as TSession
 
 
@@ -190,6 +191,17 @@ class Device(NamedTuple):
 
     id: str
     """The Device ID of the client."""
+
+
+class RequestId(NamedTuple):
+    """Wrapper for the request id in the EdgeContext."""
+
+    readable_id: str
+    """The human readable Request ID of the request."""
+
+    @property
+    def id(self) -> Optional[str]:
+        return self.readable_id
 
 
 class OriginService(NamedTuple):
@@ -402,6 +414,8 @@ class EdgeContext:
         fields = {"session_id": self.session.id}
         if self.device.id:
             fields["device_id"] = self.device.id
+        if self.request_id.id:
+            fields["edge_request_id"] = self.request_id.id
         fields.update(self.user.event_fields())
         fields.update(self.oauth_client.event_fields())
         return fields
@@ -450,6 +464,11 @@ class EdgeContext:
         return Geolocation(country_code=self._t_request.geolocation.country_code)
 
     @cached_property
+    def request_id(self) -> RequestId:
+        """:py:class:`~reddit_edgecontext.RequestId` object for the current context."""
+        return RequestId(readable_id=self._t_request.request_id.readable_id)
+
+    @cached_property
     def _t_request(self) -> TRequest:
         _t_request = TRequest()
         _t_request.loid = TLoid()
@@ -457,6 +476,7 @@ class EdgeContext:
         _t_request.device = TDevice()
         _t_request.origin_service = TOriginService()
         _t_request.geolocation = TGeolocation()
+        _t_request.request_id = TRequestId()
         if self._header:
             try:
                 TSerialization.deserialize(_t_request, self._header, self._HEADER_PROTOCOL_FACTORY)
@@ -499,6 +519,7 @@ class EdgeContextFactory(BaseEdgeContextFactory):
         device_id: Optional[str] = None,
         origin_service_name: Optional[str] = None,
         country_code: Optional[str] = None,
+        request_id: Optional[str] = None,
     ) -> EdgeContext:
         """Return a new EdgeContext object made from scratch.
 
@@ -516,6 +537,7 @@ class EdgeContextFactory(BaseEdgeContextFactory):
             loid = parse_loid(request.cookies["loid"])
             session = parse_session(request.cookies["session"])
             device_id = request.headers["x-device-id"]
+            request_id = request.headers["x-request-id']
 
             edge_context = self.edgecontext_factory.new(
                 authentication_token=token,
@@ -523,6 +545,7 @@ class EdgeContextFactory(BaseEdgeContextFactory):
                 loid_created_ms=loid.created,
                 session_id=session.id,
                 device_id=device_id,
+                request_id=request_id,
             )
             edge_context.attach_context(request)
 
@@ -537,6 +560,8 @@ class EdgeContextFactory(BaseEdgeContextFactory):
             request from the client.
         :param country_code: two-character ISO 3166-1 country code where the
             request orginated from.
+        :param request_id: The human readable form of the unique id assigned to
+            the underlying request that this EdgeContext represents.
 
         """
         if loid_id is not None and not loid_id.startswith("t2_"):
@@ -558,6 +583,7 @@ class EdgeContextFactory(BaseEdgeContextFactory):
             device=TDevice(id=device_id),
             origin_service=TOriginService(name=origin_service_name),
             geolocation=TGeolocation(country_code=country_code),
+            request_id=TRequestId(readable_id=request_id),
         )
         header = TSerialization.serialize(t_request, EdgeContext._HEADER_PROTOCOL_FACTORY)
 

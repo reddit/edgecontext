@@ -37,16 +37,9 @@ class Loid(object):
 
     """
 
-    __slots__ = (
-        "id",
-        "created_ms",
-    )
+    __slots__ = ("id", "created_ms")
 
-    def __init__(
-        self,
-        id=None,
-        created_ms=None,
-    ):
+    def __init__(self, id=None, created_ms=None):
         self.id = id
         self.created_ms = created_ms
 
@@ -137,10 +130,7 @@ class Session(object):
 
     __slots__ = ("id",)
 
-    def __init__(
-        self,
-        id=None,
-    ):
+    def __init__(self, id=None):
         self.id = id
 
     def read(self, iprot):
@@ -221,10 +211,7 @@ class Device(object):
 
     __slots__ = ("id",)
 
-    def __init__(
-        self,
-        id=None,
-    ):
+    def __init__(self, id=None):
         self.id = id
 
     def read(self, iprot):
@@ -306,10 +293,7 @@ class OriginService(object):
 
     __slots__ = ("name",)
 
-    def __init__(
-        self,
-        name=None,
-    ):
+    def __init__(self, name=None):
         self.name = name
 
     def read(self, iprot):
@@ -389,10 +373,7 @@ class Geolocation(object):
 
     __slots__ = ("country_code",)
 
-    def __init__(
-        self,
-        country_code=None,
-    ):
+    def __init__(self, country_code=None):
         self.country_code = country_code
 
     def read(self, iprot):
@@ -457,6 +438,87 @@ class Geolocation(object):
         return not (self == other)
 
 
+class RequestId(object):
+    """
+    Unique identifier of this Edge Request
+
+    This model is a component of the "Edge-Request" header.  You should not need to
+    interact with this model directly, but rather through the EdgeRequestContext
+    interface provided by baseplate.
+
+
+    Attributes:
+     - readable_id: The id of this Edge Request, in the most human-readable format.
+
+    """
+
+    __slots__ = ("readable_id",)
+
+    def __init__(self, readable_id=None):
+        self.readable_id = readable_id
+
+    def read(self, iprot):
+        if (
+            iprot._fast_decode is not None
+            and isinstance(iprot.trans, TTransport.CReadableTransport)
+            and self.thrift_spec is not None
+        ):
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.STRING:
+                    self.readable_id = (
+                        iprot.readString().decode("utf-8", errors="replace")
+                        if sys.version_info[0] == 2
+                        else iprot.readString()
+                    )
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin("RequestId")
+        if self.readable_id is not None:
+            oprot.writeFieldBegin("readable_id", TType.STRING, 1)
+            oprot.writeString(
+                self.readable_id.encode("utf-8") if sys.version_info[0] == 2 else self.readable_id
+            )
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        return
+
+    def __repr__(self):
+        L = ["%s=%r" % (key, getattr(self, key)) for key in self.__slots__]
+        return "%s(%s)" % (self.__class__.__name__, ", ".join(L))
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        for attr in self.__slots__:
+            my_val = getattr(self, attr)
+            other_val = getattr(other, attr)
+            if my_val != other_val:
+                return False
+        return True
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
 class Request(object):
     """
     Container model for the Edge-Request context header.
@@ -474,6 +536,7 @@ class Request(object):
      - device
      - origin_service
      - geolocation
+     - request_id
 
     """
 
@@ -484,6 +547,7 @@ class Request(object):
         "device",
         "origin_service",
         "geolocation",
+        "request_id",
     )
 
     def __init__(
@@ -494,6 +558,7 @@ class Request(object):
         device=None,
         origin_service=None,
         geolocation=None,
+        request_id=None,
     ):
         self.loid = loid
         self.session = session
@@ -501,6 +566,7 @@ class Request(object):
         self.device = device
         self.origin_service = origin_service
         self.geolocation = geolocation
+        self.request_id = request_id
 
     def read(self, iprot):
         if (
@@ -554,6 +620,12 @@ class Request(object):
                     self.geolocation.read(iprot)
                 else:
                     iprot.skip(ftype)
+            elif fid == 7:
+                if ftype == TType.STRUCT:
+                    self.request_id = RequestId()
+                    self.request_id.read(iprot)
+                else:
+                    iprot.skip(ftype)
             else:
                 iprot.skip(ftype)
             iprot.readFieldEnd()
@@ -592,6 +664,10 @@ class Request(object):
             oprot.writeFieldBegin("geolocation", TType.STRUCT, 6)
             self.geolocation.write(oprot)
             oprot.writeFieldEnd()
+        if self.request_id is not None:
+            oprot.writeFieldBegin("request_id", TType.STRUCT, 7)
+            self.request_id.write(oprot)
+            oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
 
@@ -619,110 +695,29 @@ class Request(object):
 all_structs.append(Loid)
 Loid.thrift_spec = (
     None,  # 0
-    (
-        1,
-        TType.STRING,
-        "id",
-        "UTF8",
-        None,
-    ),  # 1
-    (
-        2,
-        TType.I64,
-        "created_ms",
-        None,
-        None,
-    ),  # 2
+    (1, TType.STRING, "id", "UTF8", None),  # 1
+    (2, TType.I64, "created_ms", None, None),  # 2
 )
 all_structs.append(Session)
-Session.thrift_spec = (
-    None,  # 0
-    (
-        1,
-        TType.STRING,
-        "id",
-        "UTF8",
-        None,
-    ),  # 1
-)
+Session.thrift_spec = (None, (1, TType.STRING, "id", "UTF8", None))  # 0  # 1
 all_structs.append(Device)
-Device.thrift_spec = (
-    None,  # 0
-    (
-        1,
-        TType.STRING,
-        "id",
-        "UTF8",
-        None,
-    ),  # 1
-)
+Device.thrift_spec = (None, (1, TType.STRING, "id", "UTF8", None))  # 0  # 1
 all_structs.append(OriginService)
-OriginService.thrift_spec = (
-    None,  # 0
-    (
-        1,
-        TType.STRING,
-        "name",
-        "UTF8",
-        None,
-    ),  # 1
-)
+OriginService.thrift_spec = (None, (1, TType.STRING, "name", "UTF8", None))  # 0  # 1
 all_structs.append(Geolocation)
-Geolocation.thrift_spec = (
-    None,  # 0
-    (
-        1,
-        TType.STRING,
-        "country_code",
-        "UTF8",
-        None,
-    ),  # 1
-)
+Geolocation.thrift_spec = (None, (1, TType.STRING, "country_code", "UTF8", None))  # 0  # 1
+all_structs.append(RequestId)
+RequestId.thrift_spec = (None, (1, TType.STRING, "readable_id", "UTF8", None))  # 0  # 1
 all_structs.append(Request)
 Request.thrift_spec = (
     None,  # 0
-    (
-        1,
-        TType.STRUCT,
-        "loid",
-        [Loid, None],
-        None,
-    ),  # 1
-    (
-        2,
-        TType.STRUCT,
-        "session",
-        [Session, None],
-        None,
-    ),  # 2
-    (
-        3,
-        TType.STRING,
-        "authentication_token",
-        "UTF8",
-        None,
-    ),  # 3
-    (
-        4,
-        TType.STRUCT,
-        "device",
-        [Device, None],
-        None,
-    ),  # 4
-    (
-        5,
-        TType.STRUCT,
-        "origin_service",
-        [OriginService, None],
-        None,
-    ),  # 5
-    (
-        6,
-        TType.STRUCT,
-        "geolocation",
-        [Geolocation, None],
-        None,
-    ),  # 6
+    (1, TType.STRUCT, "loid", [Loid, None], None),  # 1
+    (2, TType.STRUCT, "session", [Session, None], None),  # 2
+    (3, TType.STRING, "authentication_token", "UTF8", None),  # 3
+    (4, TType.STRUCT, "device", [Device, None], None),  # 4
+    (5, TType.STRUCT, "origin_service", [OriginService, None], None),  # 5
+    (6, TType.STRUCT, "geolocation", [Geolocation, None], None),  # 6
+    (7, TType.STRUCT, "request_id", [RequestId, None], None),  # 7
 )
 fix_spec(all_structs)
 del all_structs

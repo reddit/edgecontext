@@ -129,6 +129,8 @@ type NewArgs struct {
 	OriginServiceName string
 
 	CountryCode string
+
+	RequestID string
 }
 
 // New creates a new EdgeRequestContext from scratch.
@@ -164,6 +166,11 @@ func New(ctx context.Context, impl *Impl, args NewArgs) (*EdgeRequestContext, er
 	if args.CountryCode != "" {
 		request.Geolocation = &ecthrift.Geolocation{
 			CountryCode: ecthrift.CountryCode(args.CountryCode),
+		}
+	}
+	if args.RequestID != "" {
+		request.RequestID = &ecthrift.RequestId{
+			ReadableID: args.RequestID,
 		}
 	}
 	request.AuthenticationToken = ecthrift.AuthenticationToken(args.AuthToken)
@@ -210,6 +217,9 @@ func FromHeader(ctx context.Context, header string, impl *Impl) (*EdgeRequestCon
 	}
 	if request.Geolocation != nil {
 		raw.CountryCode = string(request.Geolocation.CountryCode)
+	}
+	if request.RequestID != nil {
+		raw.RequestID = request.RequestID.ReadableID
 	}
 	return &EdgeRequestContext{
 		impl:   impl,

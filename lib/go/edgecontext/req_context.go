@@ -164,3 +164,8 @@ type OriginService struct {
 func (os OriginService) Name() string {
 	return os.raw.OriginServiceName
 }
+
+// RequestID is the id of this request.
+func (e *EdgeRequestContext) RequestID() string {
+	return e.raw.RequestID
+}

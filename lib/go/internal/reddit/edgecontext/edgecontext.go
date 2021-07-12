@@ -618,6 +618,114 @@ func (p *Geolocation) String() string {
   return fmt.Sprintf("Geolocation(%+v)", *p)
 }
 
+// Unique identifier of this Edge Request
+// 
+// This model is a component of the "Edge-Request" header.  You should not need to
+// interact with this model directly, but rather through the EdgeRequestContext
+// interface provided by baseplate.
+// 
+// 
+// Attributes:
+//  - ReadableID: The id of this Edge Request, in the most human-readable format.
+type RequestId struct {
+  ReadableID string `thrift:"readable_id,1" db:"readable_id" json:"readable_id"`
+}
+
+func NewRequestId() *RequestId {
+  return &RequestId{}
+}
+
+
+func (p *RequestId) GetReadableID() string {
+  return p.ReadableID
+}
+func (p *RequestId) Read(ctx context.Context, iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(ctx); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin(ctx)
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRING {
+        if err := p.ReadField1(ctx, iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(ctx); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(ctx); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *RequestId)  ReadField1(ctx context.Context, iprot thrift.TProtocol) error {
+  if v, err := iprot.ReadString(ctx); err != nil {
+  return thrift.PrependError("error reading field 1: ", err)
+} else {
+  p.ReadableID = v
+}
+  return nil
+}
+
+func (p *RequestId) Write(ctx context.Context, oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin(ctx, "RequestId"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(ctx, oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(ctx); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(ctx); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *RequestId) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin(ctx, "readable_id", thrift.STRING, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:readable_id: ", p), err) }
+  if err := oprot.WriteString(ctx, string(p.ReadableID)); err != nil {
+  return thrift.PrependError(fmt.Sprintf("%T.readable_id (1) field write error: ", p), err) }
+  if err := oprot.WriteFieldEnd(ctx); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:readable_id: ", p), err) }
+  return err
+}
+
+func (p *RequestId) Equals(other *RequestId) bool {
+  if p == other {
+    return true
+  } else if p == nil || other == nil {
+    return false
+  }
+  if p.ReadableID != other.ReadableID { return false }
+  return true
+}
+
+func (p *RequestId) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("RequestId(%+v)", *p)
+}
+
 // Container model for the Edge-Request context header.
 // 
 // Baseplate will automatically parse this from the "Edge-Request" header and
@@ -633,6 +741,7 @@ func (p *Geolocation) String() string {
 //  - Device
 //  - OriginService
 //  - Geolocation
+//  - RequestID
 type Request struct {
   Loid *Loid `thrift:"loid,1" db:"loid" json:"loid"`
   Session *Session `thrift:"session,2" db:"session" json:"session"`
@@ -640,6 +749,7 @@ type Request struct {
   Device *Device `thrift:"device,4" db:"device" json:"device"`
   OriginService *OriginService `thrift:"origin_service,5" db:"origin_service" json:"origin_service"`
   Geolocation *Geolocation `thrift:"geolocation,6" db:"geolocation" json:"geolocation"`
+  RequestID *RequestId `thrift:"request_id,7" db:"request_id" json:"request_id,omitempty"`
 }
 
 func NewRequest() *Request {
@@ -685,6 +795,13 @@ func (p *Request) GetGeolocation() *Geolocation {
   }
 return p.Geolocation
 }
+var Request_RequestID_DEFAULT *RequestId
+func (p *Request) GetRequestID() *RequestId {
+  if !p.IsSetRequestID() {
+    return Request_RequestID_DEFAULT
+  }
+return p.RequestID
+}
 func (p *Request) IsSetLoid() bool {
   return p.Loid != nil
 }
@@ -703,6 +820,10 @@ func (p *Request) IsSetOriginService() bool {
 
 func (p *Request) IsSetGeolocation() bool {
   return p.Geolocation != nil
+}
+
+func (p *Request) IsSetRequestID() bool {
+  return p.RequestID != nil
 }
 
 func (p *Request) Read(ctx context.Context, iprot thrift.TProtocol) error {
@@ -778,6 +899,16 @@ func (p *Request) Read(ctx context.Context, iprot thrift.TProtocol) error {
           return err
         }
       }
+    case 7:
+      if fieldTypeId == thrift.STRUCT {
+        if err := p.ReadField7(ctx, iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(ctx, fieldTypeId); err != nil {
+          return err
+        }
+      }
     default:
       if err := iprot.Skip(ctx, fieldTypeId); err != nil {
         return err
@@ -843,6 +974,14 @@ func (p *Request)  ReadField6(ctx context.Context, iprot thrift.TProtocol) error
   return nil
 }
 
+func (p *Request)  ReadField7(ctx context.Context, iprot thrift.TProtocol) error {
+  p.RequestID = &RequestId{}
+  if err := p.RequestID.Read(ctx, iprot); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", p.RequestID), err)
+  }
+  return nil
+}
+
 func (p *Request) Write(ctx context.Context, oprot thrift.TProtocol) error {
   if err := oprot.WriteStructBegin(ctx, "Request"); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
@@ -853,6 +992,7 @@ func (p *Request) Write(ctx context.Context, oprot thrift.TProtocol) error {
     if err := p.writeField4(ctx, oprot); err != nil { return err }
     if err := p.writeField5(ctx, oprot); err != nil { return err }
     if err := p.writeField6(ctx, oprot); err != nil { return err }
+    if err := p.writeField7(ctx, oprot); err != nil { return err }
   }
   if err := oprot.WriteFieldStop(ctx); err != nil {
     return thrift.PrependError("write field stop error: ", err) }
@@ -926,6 +1066,19 @@ func (p *Request) writeField6(ctx context.Context, oprot thrift.TProtocol) (err 
   return err
 }
 
+func (p *Request) writeField7(ctx context.Context, oprot thrift.TProtocol) (err error) {
+  if p.IsSetRequestID() {
+    if err := oprot.WriteFieldBegin(ctx, "request_id", thrift.STRUCT, 7); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 7:request_id: ", p), err) }
+    if err := p.RequestID.Write(ctx, oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.RequestID), err)
+    }
+    if err := oprot.WriteFieldEnd(ctx); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 7:request_id: ", p), err) }
+  }
+  return err
+}
+
 func (p *Request) Equals(other *Request) bool {
   if p == other {
     return true
@@ -938,6 +1091,7 @@ func (p *Request) Equals(other *Request) bool {
   if !p.Device.Equals(other.Device) { return false }
   if !p.OriginService.Equals(other.OriginService) { return false }
   if !p.Geolocation.Equals(other.Geolocation) { return false }
+  if !p.RequestID.Equals(other.RequestID) { return false }
   return true
 }
 
