@@ -22,6 +22,7 @@ from thrift.protocol.TBinaryProtocol import TBinaryProtocolAcceleratedFactory
 
 from reddit_edgecontext.thrift.ttypes import Device as TDevice
 from reddit_edgecontext.thrift.ttypes import Geolocation as TGeolocation
+from reddit_edgecontext.thrift.ttypes import Locale as TLocale
 from reddit_edgecontext.thrift.ttypes import Loid as TLoid
 from reddit_edgecontext.thrift.ttypes import OriginService as TOriginService
 from reddit_edgecontext.thrift.ttypes import Request as TRequest
@@ -216,6 +217,12 @@ class Geolocation(NamedTuple):
 
     country_code: str
     """The ISO-3166-1 alpha-2 country code from which the request came."""
+
+class Locale(NamedTuple):
+    """Wrapper for the locale values in the EdgeContext."""
+
+    language_code: str
+    """The ISO-639-1 language identifier for the client"""
 
 
 class User(NamedTuple):
@@ -469,6 +476,11 @@ class EdgeContext:
         return RequestId(readable_id=self._t_request.request_id.readable_id)
 
     @cached_property
+    def locale(self) -> Locale:
+        """:py:class:`~reddit_edgecontext.Locale` object for the current context."""
+        return Locale(language_code=self._t_request.locale.language_code)
+
+    @cached_property
     def _t_request(self) -> TRequest:
         _t_request = TRequest()
         _t_request.loid = TLoid()
@@ -477,6 +489,7 @@ class EdgeContext:
         _t_request.origin_service = TOriginService()
         _t_request.geolocation = TGeolocation()
         _t_request.request_id = TRequestId()
+        _t_request.locale = TLocale()
         if self._header:
             try:
                 TSerialization.deserialize(_t_request, self._header, self._HEADER_PROTOCOL_FACTORY)
@@ -520,6 +533,7 @@ class EdgeContextFactory(BaseEdgeContextFactory):
         origin_service_name: Optional[str] = None,
         country_code: Optional[str] = None,
         request_id: Optional[str] = None,
+        language_code: Optional[str] = None,
     ) -> EdgeContext:
         """Return a new EdgeContext object made from scratch.
 
@@ -562,6 +576,7 @@ class EdgeContextFactory(BaseEdgeContextFactory):
             request orginated from.
         :param request_id: The human readable form of the unique id assigned to
             the underlying request that this EdgeContext represents.
+        :param language_code: two-character ISO 639-1 language code for the client
 
         """
         if loid_id is not None and not loid_id.startswith("t2_"):
@@ -584,6 +599,7 @@ class EdgeContextFactory(BaseEdgeContextFactory):
             origin_service=TOriginService(name=origin_service_name),
             geolocation=TGeolocation(country_code=country_code),
             request_id=TRequestId(readable_id=request_id),
+            locale=TLocale(language_code=language_code),
         )
         header = TSerialization.serialize(t_request, EdgeContext._HEADER_PROTOCOL_FACTORY)
 

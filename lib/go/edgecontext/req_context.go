@@ -91,6 +91,11 @@ func (e *EdgeRequestContext) CountryCode() string {
 	return e.raw.CountryCode
 }
 
+// LanguageCode returns the ISO 639-1 language identifier for the client
+func (e *EdgeRequestContext) LanguageCode() string {
+	return e.raw.LanguageCode
+}
+
 // OriginService returns the info about the origin of this request.
 func (e *EdgeRequestContext) OriginService() OriginService {
 	return OriginService{

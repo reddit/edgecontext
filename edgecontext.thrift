@@ -10,6 +10,11 @@ typedef string AuthenticationToken
 /** A two-character ISO 3166-1 country code
 
 */
+typedef string LanguageCode
+
+/** ISO 639-1 language identifier
+
+*/
 typedef string CountryCode
 
 /** The components of the Reddit LoID cookie that we want to propagate between
@@ -104,6 +109,20 @@ struct RequestId {
     1: string readable_id
 }
 
+/** Locale data from a request to our services that we want to
+propagate between services.
+
+This model is a component of the "Edge-Request" header.  You should not need to
+interact with this model directly, but rather through the EdgeRequestContext
+interface provided by baseplate.
+
+*/
+struct Locale {
+    /** The country code of the requesting client.
+    */
+    1: LanguageCode language_code
+}
+
 /** Container model for the Edge-Request context header.
 
 Baseplate will automatically parse this from the "Edge-Request" header and
@@ -120,4 +139,5 @@ struct Request {
     5: OriginService origin_service;
     6: Geolocation geolocation;
     7: optional RequestId request_id;
+    7: Locale locale;
 }
