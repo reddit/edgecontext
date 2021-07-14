@@ -134,6 +134,7 @@ class EdgeContextTests(unittest.TestCase):
     DEVICE_ID = "becc50f6-ff3d-407a-aa49-fa49531363be"
     ORIGIN_NAME = "baseplate"
     COUNTRY_CODE = "OK"
+    LANGUAGE_CODE = "EN"
 
     def setUp(self):
         self.store = FakeSecretsStore(
@@ -157,6 +158,7 @@ class EdgeContextTests(unittest.TestCase):
             device_id=self.DEVICE_ID,
             origin_service_name=self.ORIGIN_NAME,
             country_code=self.COUNTRY_CODE,
+            language_code=self.LANGUAGE_CODE,
         )
         self.assertIsNot(request_context._t_request, None)
         self.assertEqual(request_context._header, SERIALIZED_EDGECONTEXT_WITH_VALID_AUTH)
@@ -176,6 +178,7 @@ class EdgeContextTests(unittest.TestCase):
                 loid_created_ms=self.LOID_CREATED_MS,
                 session_id=self.SESSION_ID,
                 country_code="aa",
+                language_code="en",
             )
 
     def test_create_empty_context(self):
@@ -194,6 +197,8 @@ class EdgeContextTests(unittest.TestCase):
             b"\x0c\x00\x06\x00"
             # request_id
             b"\x0c\x00\x07\x00"
+            # locale
+            b"\x0c\x00\x08\x00"
             # end of EdgeContext
             b"\x00",
         )
@@ -249,6 +254,7 @@ class EdgeContextTests(unittest.TestCase):
         self.assertEqual(request_context.device.id, self.DEVICE_ID)
         self.assertEqual(request_context.origin_service.name, self.ORIGIN_NAME)
         self.assertEqual(request_context.geolocation.country_code, self.COUNTRY_CODE)
+        self.assertEqual(request_context.locale.language_code, self.LANGUAGE_CODE)
         self.assertEqual(
             request_context.event_fields(),
             {

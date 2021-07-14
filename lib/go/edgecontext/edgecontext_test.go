@@ -33,12 +33,13 @@ const (
 )
 
 const (
-	expectedCountryCode = "OK"
-	expectedDeviceID    = "becc50f6-ff3d-407a-aa49-fa49531363be"
-	expectedLoID        = "t2_deadbeef"
-	expectedOrigin      = "baseplate"
-	expectedSessionID   = "beefdead"
-	expectedRequestID   = "2adaff94-9067-4de0-a00b-79fded5cff9e"
+	expectedCountryCode  = "OK"
+	expectedLanguageCode = "EN"
+	expectedDeviceID     = "becc50f6-ff3d-407a-aa49-fa49531363be"
+	expectedLoID         = "t2_deadbeef"
+	expectedOrigin       = "baseplate"
+	expectedSessionID    = "beefdead"
+	expectedRequestID    = "2adaff94-9067-4de0-a00b-79fded5cff9e"
 
 	emptyDeviceID = "00000000-0000-0000-0000-000000000000"
 )
@@ -228,6 +229,7 @@ func TestNew(t *testing.T) {
 			AuthToken:         validToken,
 			DeviceID:          expectedDeviceID,
 			CountryCode:       expectedCountryCode,
+			LanguageCode:      expectedLanguageCode,
 			OriginServiceName: expectedOrigin,
 			RequestID:         expectedRequestID,
 		},
@@ -384,6 +386,14 @@ func TestFromHeader(t *testing.T) {
 					"Expected device id %q, got %q",
 					expectedCountryCode,
 					e.CountryCode(),
+				)
+			}
+
+			if e.LanguageCode() != expectedLanguageCode {
+				t.Errorf(
+					"Expected language code %q, got %q",
+					expectedLanguageCode,
+					e.LanguageCode(),
 				)
 			}
 

@@ -139,5 +139,5 @@ struct Request {
     5: OriginService origin_service;
     6: Geolocation geolocation;
     7: optional RequestId request_id;
-    7: Locale locale;
+    8: Locale locale;
 }

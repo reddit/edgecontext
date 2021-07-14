@@ -218,6 +218,7 @@ class Geolocation(NamedTuple):
     country_code: str
     """The ISO-3166-1 alpha-2 country code from which the request came."""
 
+
 class Locale(NamedTuple):
     """Wrapper for the locale values in the EdgeContext."""
 
