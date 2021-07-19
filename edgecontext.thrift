@@ -7,12 +7,17 @@ namespace java com.reddit.edgecontext
 */
 typedef string AuthenticationToken
 
-/** A two-character ISO 3166-1 country code
+/** ISO 639-1 language identifier
 
 */
 typedef string LanguageCode
 
-/** ISO 639-1 language identifier
+/** ISO 3166-1 region identifier
+
+*/
+typedef string RegionCode
+
+/** A two-character ISO 3166-1 country code
 
 */
 typedef string CountryCode
@@ -118,9 +123,13 @@ interface provided by baseplate.
 
 */
 struct Locale {
-    /** The country code of the requesting client.
+    /** The preferred locale code of the requesting client.
     */
     1: LanguageCode language_code
+
+    /** The preferred region code of the requesting client.
+    */
+    2: RegionCode region_code
 }
 
 /** Container model for the Edge-Request context header.

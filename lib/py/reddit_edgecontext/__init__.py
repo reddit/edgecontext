@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 COUNTRY_CODE_RE = re.compile(r"^[A-Z]{2}$")
+LANGUAGE_CODE_RE = re.compile(r"^[a-z]{2}$")
 
 
 class NoAuthenticationError(Exception):
@@ -223,7 +224,10 @@ class Locale(NamedTuple):
     """Wrapper for the locale values in the EdgeContext."""
 
     language_code: str
-    """The ISO-639-1 language identifier for the client"""
+    """The ISO-639-1 language identifier for the client."""
+
+    region_code: str
+    """The ISO-3166-1 alpha-2 region identifier for the client."""
 
 
 class User(NamedTuple):
@@ -479,7 +483,10 @@ class EdgeContext:
     @cached_property
     def locale(self) -> Locale:
         """:py:class:`~reddit_edgecontext.Locale` object for the current context."""
-        return Locale(language_code=self._t_request.locale.language_code)
+        return Locale(
+            language_code=self._t_request.locale.language_code,
+            region_code=self._t_request.locale.region_code,
+        )
 
     @cached_property
     def _t_request(self) -> TRequest:
@@ -535,6 +542,7 @@ class EdgeContextFactory(BaseEdgeContextFactory):
         country_code: Optional[str] = None,
         request_id: Optional[str] = None,
         language_code: Optional[str] = None,
+        region_code: Optional[str] = None,
     ) -> EdgeContext:
         """Return a new EdgeContext object made from scratch.
 
@@ -577,7 +585,8 @@ class EdgeContextFactory(BaseEdgeContextFactory):
             request orginated from.
         :param request_id: The human readable form of the unique id assigned to
             the underlying request that this EdgeContext represents.
-        :param language_code: two-character ISO 639-1 language code for the client
+        :param language_code: two-character ISO 639-1 preferred language code for the client
+        :param region_code: two-character ISO 3166-1 preferred region code for the client
 
         """
         if loid_id is not None and not loid_id.startswith("t2_"):
@@ -592,6 +601,18 @@ class EdgeContextFactory(BaseEdgeContextFactory):
                 "ISO 3166-1 alpha-2 format: 'US'" % country_code
             )
 
+        if region_code is not None and not COUNTRY_CODE_RE.match(region_code):
+            raise ValueError(
+                "region_code <%s> is not in a valid format, it should be in "
+                "ISO 3166-1 alpha-2 format: 'US'" % region_code
+            )
+        
+        if language_code is not None and not LANGUAGE_CODE_RE.match(language_code):
+            raise ValueError(
+                "language_code <%s> is not in a valid format, it should be in "
+                "ISO 639-1 format: 'en'" % language_code
+            )
+
         t_request = TRequest(
             loid=TLoid(id=loid_id, created_ms=loid_created_ms),
             session=TSession(id=session_id),
@@ -600,7 +621,7 @@ class EdgeContextFactory(BaseEdgeContextFactory):
             origin_service=TOriginService(name=origin_service_name),
             geolocation=TGeolocation(country_code=country_code),
             request_id=TRequestId(readable_id=request_id),
-            locale=TLocale(language_code=language_code),
+            locale=TLocale(language_code=language_code, region_code=region_code),
         )
         header = TSerialization.serialize(t_request, EdgeContext._HEADER_PROTOCOL_FACTORY)
 

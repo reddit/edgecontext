@@ -96,6 +96,11 @@ func (e *EdgeRequestContext) LanguageCode() string {
 	return e.raw.LanguageCode
 }
 
+// RegionCode returns the ISO 3166-1 region identifier for the client
+func (e *EdgeRequestContext) RegionCode() string {
+	return e.raw.RegionCode
+}
+
 // OriginService returns the info about the origin of this request.
 func (e *EdgeRequestContext) OriginService() OriginService {
 	return OriginService{

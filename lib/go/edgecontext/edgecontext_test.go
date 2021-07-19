@@ -35,6 +35,7 @@ const (
 const (
 	expectedCountryCode  = "OK"
 	expectedLanguageCode = "EN"
+	expectedRegionCode   = "US"
 	expectedDeviceID     = "becc50f6-ff3d-407a-aa49-fa49531363be"
 	expectedLoID         = "t2_deadbeef"
 	expectedOrigin       = "baseplate"
@@ -229,9 +230,10 @@ func TestNew(t *testing.T) {
 			AuthToken:         validToken,
 			DeviceID:          expectedDeviceID,
 			CountryCode:       expectedCountryCode,
-			LanguageCode:      expectedLanguageCode,
 			OriginServiceName: expectedOrigin,
 			RequestID:         expectedRequestID,
+			LanguageCode:      expectedLanguageCode,
+			RegionCode:        expectedRegionCode,
 		},
 	)
 	if err != nil {
@@ -394,6 +396,14 @@ func TestFromHeader(t *testing.T) {
 					"Expected language code %q, got %q",
 					expectedLanguageCode,
 					e.LanguageCode(),
+				)
+			}
+
+			if e.RegionCode() != expectedRegionCode {
+				t.Errorf(
+					"Expected region code %q, got %q",
+					expectedRegionCode,
+					e.RegionCode(),
 				)
 			}
 
