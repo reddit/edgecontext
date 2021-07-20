@@ -383,7 +383,7 @@ class Geolocation(object):
 
 
     Attributes:
-     - country_code: The country code of the requesting client.
+     - country_code: The country code of the requesting client based on geographic location.
 
     """
 
@@ -552,8 +552,8 @@ class Locale(object):
 
 
     Attributes:
-     - language_code: The preferred locale code of the requesting client.
-     - region_code: The preferred region code of the requesting client.
+     - language_code: Language code representing the client language preferences.
+     - region_code: Region code representing the client configured locale region.
 
     """
 

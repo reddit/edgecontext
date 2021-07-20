@@ -603,14 +603,14 @@ class EdgeContextFactory(BaseEdgeContextFactory):
 
         if region_code is not None and not COUNTRY_CODE_RE.match(region_code):
             raise ValueError(
-                "region_code <%s> is not in a valid format, it should be in "
-                "ISO 3166-1 alpha-2 format: 'US'" % region_code
+                f"region_code <{region_code}> is not in a valid format, it should be in "
+                "ISO 3166-1 alpha-2 format: 'US'"
             )
-        
+
         if language_code is not None and not LANGUAGE_CODE_RE.match(language_code):
             raise ValueError(
-                "language_code <%s> is not in a valid format, it should be in "
-                "ISO 639-1 format: 'en'" % language_code
+                f"language_code <{language_code}> is not in a valid format, it should be in "
+                "ISO 639-1 format: 'en'"
             )
 
         t_request = TRequest(

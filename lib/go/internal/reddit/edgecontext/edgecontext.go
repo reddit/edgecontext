@@ -23,19 +23,23 @@ type AuthenticationToken string
 
 func AuthenticationTokenPtr(v AuthenticationToken) *AuthenticationToken { return &v }
 
-//ISO 639-1 language identifier
+//ISO 639-1 language identifier representing the preferred language for
+//the client.
 //
 type LanguageCode string
 
 func LanguageCodePtr(v LanguageCode) *LanguageCode { return &v }
 
-//ISO 3166-1 region identifier
+//ISO 3166-1 region identifier representing the preferred locale region
+//for the client. This is the region the client is configured with, and not
+//necessarily the current geographic location.
 //
 type RegionCode string
 
 func RegionCodePtr(v RegionCode) *RegionCode { return &v }
 
-//A two-character ISO 3166-1 country code
+//A two-character ISO 3166-1 country code representing the current
+//geographic location of the client.
 //
 type CountryCode string
 
@@ -529,7 +533,7 @@ func (p *OriginService) String() string {
 // 
 // 
 // Attributes:
-//  - CountryCode: The country code of the requesting client.
+//  - CountryCode: The country code of the requesting client based on geographic location.
 type Geolocation struct {
   CountryCode CountryCode `thrift:"country_code,1" db:"country_code" json:"country_code"`
 }
@@ -747,8 +751,8 @@ func (p *RequestId) String() string {
 // 
 // 
 // Attributes:
-//  - LanguageCode: The preferred locale code of the requesting client.
-//  - RegionCode: The preferred region code of the requesting client.
+//  - LanguageCode: Language code representing the client language preferences.
+//  - RegionCode: Region code representing the client configured locale region.
 type Locale struct {
   LanguageCode LanguageCode `thrift:"language_code,1" db:"language_code" json:"language_code"`
   RegionCode RegionCode `thrift:"region_code,2" db:"region_code" json:"region_code"`
@@ -911,7 +915,7 @@ type Request struct {
   OriginService *OriginService `thrift:"origin_service,5" db:"origin_service" json:"origin_service"`
   Geolocation *Geolocation `thrift:"geolocation,6" db:"geolocation" json:"geolocation"`
   RequestID *RequestId `thrift:"request_id,7" db:"request_id" json:"request_id,omitempty"`
-  Locale *Locale `thrift:"locale,8" db:"locale" json:"locale"`
+  Locale *Locale `thrift:"locale,8" db:"locale" json:"locale,omitempty"`
 }
 
 func NewRequest() *Request {
@@ -1272,13 +1276,15 @@ func (p *Request) writeField7(ctx context.Context, oprot thrift.TProtocol) (err 
 }
 
 func (p *Request) writeField8(ctx context.Context, oprot thrift.TProtocol) (err error) {
-  if err := oprot.WriteFieldBegin(ctx, "locale", thrift.STRUCT, 8); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T write field begin error 8:locale: ", p), err) }
-  if err := p.Locale.Write(ctx, oprot); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Locale), err)
+  if p.IsSetLocale() {
+    if err := oprot.WriteFieldBegin(ctx, "locale", thrift.STRUCT, 8); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 8:locale: ", p), err) }
+    if err := p.Locale.Write(ctx, oprot); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T error writing struct: ", p.Locale), err)
+    }
+    if err := oprot.WriteFieldEnd(ctx); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 8:locale: ", p), err) }
   }
-  if err := oprot.WriteFieldEnd(ctx); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T write field end error 8:locale: ", p), err) }
   return err
 }
 

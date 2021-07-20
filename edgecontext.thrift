@@ -7,17 +7,21 @@ namespace java com.reddit.edgecontext
 */
 typedef string AuthenticationToken
 
-/** ISO 639-1 language identifier
+/** ISO 639-1 language identifier representing the preferred language for
+the client.
 
 */
 typedef string LanguageCode
 
-/** ISO 3166-1 region identifier
+/** ISO 3166-1 region identifier representing the preferred locale region
+for the client. This is the region the client is configured with, and not
+necessarily the current geographic location.
 
 */
 typedef string RegionCode
 
-/** A two-character ISO 3166-1 country code
+/** A two-character ISO 3166-1 country code representing the current
+geographic location of the client.
 
 */
 typedef string CountryCode
@@ -96,7 +100,7 @@ interface provided by baseplate.
 
 */
 struct Geolocation {
-    /** The country code of the requesting client.
+    /** The country code of the requesting client based on geographic location.
     */
     1: CountryCode country_code
 }
@@ -123,11 +127,11 @@ interface provided by baseplate.
 
 */
 struct Locale {
-    /** The preferred locale code of the requesting client.
+    /** Language code representing the client language preferences.
     */
     1: LanguageCode language_code
 
-    /** The preferred region code of the requesting client.
+    /** Region code representing the client configured locale region.
     */
     2: RegionCode region_code
 }
@@ -148,5 +152,5 @@ struct Request {
     5: OriginService origin_service;
     6: Geolocation geolocation;
     7: optional RequestId request_id;
-    8: Locale locale;
+    8: optional Locale locale;
 }

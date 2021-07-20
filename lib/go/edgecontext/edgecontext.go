@@ -131,6 +131,10 @@ type NewArgs struct {
 	CountryCode string
 
 	RequestID string
+
+	LanguageCode string
+
+	RegionCode string
 }
 
 // New creates a new EdgeRequestContext from scratch.
@@ -173,6 +177,13 @@ func New(ctx context.Context, impl *Impl, args NewArgs) (*EdgeRequestContext, er
 			ReadableID: args.RequestID,
 		}
 	}
+	if args.LanguageCode != "" && args.RegionCode != "" {
+		request.Locale = &ecthrift.Locale{
+			LanguageCode: ecthrift.LanguageCode(args.LanguageCode),
+			RegionCode:   ecthrift.RegionCode(args.RegionCode),
+		}
+	}
+
 	request.AuthenticationToken = ecthrift.AuthenticationToken(args.AuthToken)
 
 	header, err := serializerPool.WriteString(ctx, request)
@@ -220,6 +231,10 @@ func FromHeader(ctx context.Context, header string, impl *Impl) (*EdgeRequestCon
 	}
 	if request.RequestID != nil {
 		raw.RequestID = request.RequestID.ReadableID
+	}
+	if request.Locale != nil {
+		raw.LanguageCode = string(request.Locale.LanguageCode)
+		raw.RegionCode = string(request.Locale.RegionCode)
 	}
 	return &EdgeRequestContext{
 		impl:   impl,
