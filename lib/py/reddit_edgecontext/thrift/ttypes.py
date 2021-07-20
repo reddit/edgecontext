@@ -553,6 +553,7 @@ class Locale(object):
 
     Attributes:
      - locale_code: IETF language code representing the client locale preferences.
+    Can be either {lang} or {lang}_{region} format. e.g. en, en_US
 
     """
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -176,6 +177,9 @@ func New(ctx context.Context, impl *Impl, args NewArgs) (*EdgeRequestContext, er
 		}
 	}
 	if args.LocaleCode != "" {
+		if !regexp.MatchString("^[a-z]{2}_[A-Z]{2}$", "en_US") {
+			return nil, ErrInvalidLocaleCode
+		}
 		request.Locale = &ecthrift.Locale{
 			LocaleCode: ecthrift.LocaleCode(args.LocaleCode),
 		}
