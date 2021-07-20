@@ -25,6 +25,13 @@ const LoIDPrefix = "t2_"
 // does not have the correct prefix.
 var ErrLoIDWrongPrefix = errors.New("edgecontext: loid should have " + LoIDPrefix + " prefix")
 
+// Locale codes should contain either a language, or a language and region specifier
+// separated by an underscore.
+// e.g. en, en_US
+const LocaleRegex = "^[a-z]{2}(_[A-Z]{2})?$"
+
+var ErrInvalidLocaleCode = errors.New("edgecontext: locale code should match format: en, en_US")
+
 // An Impl is an initialized edge context implementation.
 //
 // It implements ecinterface.Interface.
@@ -177,7 +184,8 @@ func New(ctx context.Context, impl *Impl, args NewArgs) (*EdgeRequestContext, er
 		}
 	}
 	if args.LocaleCode != "" {
-		if !regexp.MatchString("^[a-z]{2}_[A-Z]{2}$", "en_US") {
+		validLocaleCode, _ := regexp.MatchString(LocaleRegex, args.LocaleCode)
+		if !validLocaleCode {
 			return nil, ErrInvalidLocaleCode
 		}
 		request.Locale = &ecthrift.Locale{
