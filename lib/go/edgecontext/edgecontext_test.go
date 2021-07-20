@@ -243,85 +243,61 @@ func TestNew(t *testing.T) {
 }
 
 func TestLocale(t *testing.T) {
-	t.Run(
-		"valid-language",
-		func(t *testing.T) {
-			err := EdgeContextWithLocaleCode("es")
-
-			if err != nil {
-				t.Fatal(err)
-			}
+	for _, c := range []struct {
+		label  string
+		locale string
+		valid  bool
+	}{
+		{
+			label:  "valid-language",
+			locale: "es",
+			valid:  true,
 		},
-	)
-
-	t.Run(
-		"valid-language-valid-region",
-		func(t *testing.T) {
-			err := EdgeContextWithLocaleCode("es_MX")
-
-			if err != nil {
-				t.Fatal(err)
-			}
+		{
+			label:  "valid-language-valid-region",
+			locale: "es_MX",
+			valid:  true,
 		},
-	)
-
-	t.Run(
-		"valid-language-invalid-region",
-		func(t *testing.T) {
-			err := EdgeContextWithLocaleCode("es_MEX")
-
-			if err == nil {
-				t.Errorf("Expected InvalidLocaleCodeError")
-			}
+		{
+			label:  "valid-language-invalid-region",
+			locale: "es_MEX",
+			valid:  false,
 		},
-	)
-
-	t.Run(
-		"invalid-language-valid-region",
-		func(t *testing.T) {
-			err := EdgeContextWithLocaleCode("esp_MX")
-
-			if err == nil {
-				t.Errorf("Expected InvalidLocaleCodeError")
-			}
+		{
+			label:  "invalid-language-valid-region",
+			locale: "esp_MX",
+			valid:  false,
 		},
-	)
-
-	t.Run(
-		"invalid-language-invalid-region",
-		func(t *testing.T) {
-			err := EdgeContextWithLocaleCode("esp_MEX")
-
-			if err == nil {
-				t.Errorf("Expected InvalidLocaleCodeError")
-			}
+		{
+			label:  "invalid-language-invalid-region",
+			locale: "esp_MEX",
+			valid:  false,
 		},
-	)
-
-	t.Run(
-		"invalid-separator",
-		func(t *testing.T) {
-			err := EdgeContextWithLocaleCode("es-MX")
-
-			if err == nil {
-				t.Errorf("Expected InvalidLocaleCodeError")
-			}
+		{
+			label:  "invalid-separator",
+			locale: "es-MX",
+			valid:  false,
 		},
-	)
-
-	t.Run(
-		"invalid-capitalization",
-		func(t *testing.T) {
-			err := EdgeContextWithLocaleCode("ES-MX")
-
-			if err == nil {
-				t.Errorf("Expected InvalidLocaleCodeError")
-			}
+		{
+			label:  "invalid-capitalization",
+			locale: "ES_MX",
+			valid:  false,
 		},
-	)
+	} {
+		t.Run(c.label, func(t *testing.T) {
+			err := edgeContextWithLocaleCode(c.locale)
+			if (err == nil) != c.valid {
+				if !c.valid {
+					t.Errorf("Expected InvalidLocaleCodeError")
+				} else {
+					t.Fatal(err)
+				}
+			}
+		})
+	}
 }
 
-func EdgeContextWithLocaleCode(l string) error {
+func edgeContextWithLocaleCode(l string) error {
 	ctx := context.Background()
 	_, err := edgecontext.New(
 		ctx,

@@ -21,16 +21,19 @@ import (
 // LoIDPrefix is the prefix for all LoIDs.
 const LoIDPrefix = "t2_"
 
-// ErrLoIDWrongPrefix is an error could be returned by New() when passed in LoID
-// does not have the correct prefix.
-var ErrLoIDWrongPrefix = errors.New("edgecontext: loid should have " + LoIDPrefix + " prefix")
-
 // Locale codes should contain either a language, or a language and region specifier
 // separated by an underscore.
 // e.g. en, en_US
 var LocaleRegex = regexp.MustCompile(`^[a-z]{2}(_[A-Z]{2})?$`)
 
-var ErrInvalidLocaleCode = errors.New("edgecontext: locale code should match format: en, en_US")
+var (
+	// ErrLoIDWrongPrefix is an error could be returned by New() when passed in LoID
+	// does not have the correct prefix.
+	ErrLoIDWrongPrefix = errors.New("edgecontext: loid should have " + LoIDPrefix + " prefix")
+
+	// ErrInvalidLocaleCode is returned by New() when an invalid locale code is passed in.
+	ErrInvalidLocaleCode = errors.New("edgecontext: locale code should match format: en, en_US")
+)
 
 // An Impl is an initialized edge context implementation.
 //
