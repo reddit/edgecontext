@@ -287,10 +287,10 @@ func TestLocale(t *testing.T) {
 		t.Run(c.label, func(t *testing.T) {
 			err := edgeContextWithLocaleCode(c.locale)
 			if (err == nil) != c.valid {
-				if !c.valid {
-					t.Errorf("Expected InvalidLocaleCodeError")
+				if err == edgecontext.ErrInvalidLocaleCode {
+					t.Error(err)
 				} else {
-					t.Fatal(err)
+					t.Error("Expected InvalidLocaleCodeError")
 				}
 			}
 		})

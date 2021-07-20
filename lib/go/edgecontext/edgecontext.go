@@ -21,8 +21,8 @@ import (
 // LoIDPrefix is the prefix for all LoIDs.
 const LoIDPrefix = "t2_"
 
-// Locale codes should contain either a language, or a language and region specifier
-// separated by an underscore.
+// LocaleRegex validates that locale codes are correctly formatted. They can contain
+// either a language, or a language and region specifier separated by an underscore.
 // e.g. en, en_US
 var LocaleRegex = regexp.MustCompile(`^[a-z]{2}(_[A-Z]{2})?$`)
 
