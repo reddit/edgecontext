@@ -28,7 +28,7 @@ var ErrLoIDWrongPrefix = errors.New("edgecontext: loid should have " + LoIDPrefi
 // Locale codes should contain either a language, or a language and region specifier
 // separated by an underscore.
 // e.g. en, en_US
-const LocaleRegex = "^[a-z]{2}(_[A-Z]{2})?$"
+var LocaleRegex = regexp.MustCompile(`^[a-z]{2}(_[A-Z]{2})?$`)
 
 var ErrInvalidLocaleCode = errors.New("edgecontext: locale code should match format: en, en_US")
 
@@ -184,8 +184,7 @@ func New(ctx context.Context, impl *Impl, args NewArgs) (*EdgeRequestContext, er
 		}
 	}
 	if args.LocaleCode != "" {
-		validLocaleCode, _ := regexp.MatchString(LocaleRegex, args.LocaleCode)
-		if !validLocaleCode {
+		if !LocaleRegex.MatchString(args.LocaleCode) {
 			return nil, ErrInvalidLocaleCode
 		}
 		request.Locale = &ecthrift.Locale{
