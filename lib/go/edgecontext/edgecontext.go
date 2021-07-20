@@ -132,9 +132,7 @@ type NewArgs struct {
 
 	RequestID string
 
-	LanguageCode string
-
-	RegionCode string
+	LocaleCode string
 }
 
 // New creates a new EdgeRequestContext from scratch.
@@ -177,10 +175,9 @@ func New(ctx context.Context, impl *Impl, args NewArgs) (*EdgeRequestContext, er
 			ReadableID: args.RequestID,
 		}
 	}
-	if args.LanguageCode != "" && args.RegionCode != "" {
+	if args.LocaleCode != "" {
 		request.Locale = &ecthrift.Locale{
-			LanguageCode: ecthrift.LanguageCode(args.LanguageCode),
-			RegionCode:   ecthrift.RegionCode(args.RegionCode),
+			LocaleCode: ecthrift.LocaleCode(args.LocaleCode),
 		}
 	}
 
@@ -233,8 +230,7 @@ func FromHeader(ctx context.Context, header string, impl *Impl) (*EdgeRequestCon
 		raw.RequestID = request.RequestID.ReadableID
 	}
 	if request.Locale != nil {
-		raw.LanguageCode = string(request.Locale.LanguageCode)
-		raw.RegionCode = string(request.Locale.RegionCode)
+		raw.LocaleCode = string(request.Locale.LocaleCode)
 	}
 	return &EdgeRequestContext{
 		impl:   impl,

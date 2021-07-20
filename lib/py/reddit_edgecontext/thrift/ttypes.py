@@ -552,23 +552,17 @@ class Locale(object):
 
 
     Attributes:
-     - language_code: Language code representing the client language preferences.
-     - region_code: Region code representing the client configured locale region.
+     - locale_code: IETF language code representing the client locale preferences.
 
     """
 
-    __slots__ = (
-        "language_code",
-        "region_code",
-    )
+    __slots__ = ("locale_code",)
 
     def __init__(
         self,
-        language_code=None,
-        region_code=None,
+        locale_code=None,
     ):
-        self.language_code = language_code
-        self.region_code = region_code
+        self.locale_code = locale_code
 
     def read(self, iprot):
         if (
@@ -585,16 +579,7 @@ class Locale(object):
                 break
             if fid == 1:
                 if ftype == TType.STRING:
-                    self.language_code = (
-                        iprot.readString().decode("utf-8", errors="replace")
-                        if sys.version_info[0] == 2
-                        else iprot.readString()
-                    )
-                else:
-                    iprot.skip(ftype)
-            elif fid == 2:
-                if ftype == TType.STRING:
-                    self.region_code = (
+                    self.locale_code = (
                         iprot.readString().decode("utf-8", errors="replace")
                         if sys.version_info[0] == 2
                         else iprot.readString()
@@ -611,18 +596,10 @@ class Locale(object):
             oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
             return
         oprot.writeStructBegin("Locale")
-        if self.language_code is not None:
-            oprot.writeFieldBegin("language_code", TType.STRING, 1)
+        if self.locale_code is not None:
+            oprot.writeFieldBegin("locale_code", TType.STRING, 1)
             oprot.writeString(
-                self.language_code.encode("utf-8")
-                if sys.version_info[0] == 2
-                else self.language_code
-            )
-            oprot.writeFieldEnd()
-        if self.region_code is not None:
-            oprot.writeFieldBegin("region_code", TType.STRING, 2)
-            oprot.writeString(
-                self.region_code.encode("utf-8") if sys.version_info[0] == 2 else self.region_code
+                self.locale_code.encode("utf-8") if sys.version_info[0] == 2 else self.locale_code
             )
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
@@ -915,17 +892,10 @@ Locale.thrift_spec = (
     (
         1,
         TType.STRING,
-        "language_code",
+        "locale_code",
         "UTF8",
         None,
     ),  # 1
-    (
-        2,
-        TType.STRING,
-        "region_code",
-        "UTF8",
-        None,
-    ),  # 2
 )
 all_structs.append(Request)
 Request.thrift_spec = (

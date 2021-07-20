@@ -23,20 +23,15 @@ type AuthenticationToken string
 
 func AuthenticationTokenPtr(v AuthenticationToken) *AuthenticationToken { return &v }
 
-//ISO 639-1 language identifier representing the preferred language for
-//the client.
+//IETF language tag representing the preferred locale for
+//the client, used for providing localized content. Consists of
+//an ISO 639-1 primary language subtag and an optional
+//ISO 3166-1 alpha-2 region subtag separated by an underscore.
+//e.g. en_US
 //
-type LanguageCode string
+type LocaleCode string
 
-func LanguageCodePtr(v LanguageCode) *LanguageCode { return &v }
-
-//ISO 3166-1 region identifier representing the preferred locale region
-//for the client. This is the region the client is configured with, and not
-//necessarily the current geographic location.
-//
-type RegionCode string
-
-func RegionCodePtr(v RegionCode) *RegionCode { return &v }
+func LocaleCodePtr(v LocaleCode) *LocaleCode { return &v }
 
 //A two-character ISO 3166-1 country code representing the current
 //geographic location of the client.
@@ -751,11 +746,9 @@ func (p *RequestId) String() string {
 // 
 // 
 // Attributes:
-//  - LanguageCode: Language code representing the client language preferences.
-//  - RegionCode: Region code representing the client configured locale region.
+//  - LocaleCode: IETF language code representing the client locale preferences.
 type Locale struct {
-  LanguageCode LanguageCode `thrift:"language_code,1" db:"language_code" json:"language_code"`
-  RegionCode RegionCode `thrift:"region_code,2" db:"region_code" json:"region_code"`
+  LocaleCode LocaleCode `thrift:"locale_code,1" db:"locale_code" json:"locale_code"`
 }
 
 func NewLocale() *Locale {
@@ -763,12 +756,8 @@ func NewLocale() *Locale {
 }
 
 
-func (p *Locale) GetLanguageCode() LanguageCode {
-  return p.LanguageCode
-}
-
-func (p *Locale) GetRegionCode() RegionCode {
-  return p.RegionCode
+func (p *Locale) GetLocaleCode() LocaleCode {
+  return p.LocaleCode
 }
 func (p *Locale) Read(ctx context.Context, iprot thrift.TProtocol) error {
   if _, err := iprot.ReadStructBegin(ctx); err != nil {
@@ -786,16 +775,6 @@ func (p *Locale) Read(ctx context.Context, iprot thrift.TProtocol) error {
     case 1:
       if fieldTypeId == thrift.STRING {
         if err := p.ReadField1(ctx, iprot); err != nil {
-          return err
-        }
-      } else {
-        if err := iprot.Skip(ctx, fieldTypeId); err != nil {
-          return err
-        }
-      }
-    case 2:
-      if fieldTypeId == thrift.STRING {
-        if err := p.ReadField2(ctx, iprot); err != nil {
           return err
         }
       } else {
@@ -822,18 +801,8 @@ func (p *Locale)  ReadField1(ctx context.Context, iprot thrift.TProtocol) error 
   if v, err := iprot.ReadString(ctx); err != nil {
   return thrift.PrependError("error reading field 1: ", err)
 } else {
-  temp := LanguageCode(v)
-  p.LanguageCode = temp
-}
-  return nil
-}
-
-func (p *Locale)  ReadField2(ctx context.Context, iprot thrift.TProtocol) error {
-  if v, err := iprot.ReadString(ctx); err != nil {
-  return thrift.PrependError("error reading field 2: ", err)
-} else {
-  temp := RegionCode(v)
-  p.RegionCode = temp
+  temp := LocaleCode(v)
+  p.LocaleCode = temp
 }
   return nil
 }
@@ -843,7 +812,6 @@ func (p *Locale) Write(ctx context.Context, oprot thrift.TProtocol) error {
     return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
   if p != nil {
     if err := p.writeField1(ctx, oprot); err != nil { return err }
-    if err := p.writeField2(ctx, oprot); err != nil { return err }
   }
   if err := oprot.WriteFieldStop(ctx); err != nil {
     return thrift.PrependError("write field stop error: ", err) }
@@ -853,22 +821,12 @@ func (p *Locale) Write(ctx context.Context, oprot thrift.TProtocol) error {
 }
 
 func (p *Locale) writeField1(ctx context.Context, oprot thrift.TProtocol) (err error) {
-  if err := oprot.WriteFieldBegin(ctx, "language_code", thrift.STRING, 1); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:language_code: ", p), err) }
-  if err := oprot.WriteString(ctx, string(p.LanguageCode)); err != nil {
-  return thrift.PrependError(fmt.Sprintf("%T.language_code (1) field write error: ", p), err) }
+  if err := oprot.WriteFieldBegin(ctx, "locale_code", thrift.STRING, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:locale_code: ", p), err) }
+  if err := oprot.WriteString(ctx, string(p.LocaleCode)); err != nil {
+  return thrift.PrependError(fmt.Sprintf("%T.locale_code (1) field write error: ", p), err) }
   if err := oprot.WriteFieldEnd(ctx); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:language_code: ", p), err) }
-  return err
-}
-
-func (p *Locale) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
-  if err := oprot.WriteFieldBegin(ctx, "region_code", thrift.STRING, 2); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T write field begin error 2:region_code: ", p), err) }
-  if err := oprot.WriteString(ctx, string(p.RegionCode)); err != nil {
-  return thrift.PrependError(fmt.Sprintf("%T.region_code (2) field write error: ", p), err) }
-  if err := oprot.WriteFieldEnd(ctx); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T write field end error 2:region_code: ", p), err) }
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:locale_code: ", p), err) }
   return err
 }
 
@@ -878,8 +836,7 @@ func (p *Locale) Equals(other *Locale) bool {
   } else if p == nil || other == nil {
     return false
   }
-  if p.LanguageCode != other.LanguageCode { return false }
-  if p.RegionCode != other.RegionCode { return false }
+  if p.LocaleCode != other.LocaleCode { return false }
   return true
 }
 
