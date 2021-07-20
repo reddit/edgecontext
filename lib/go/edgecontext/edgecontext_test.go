@@ -2,6 +2,7 @@ package edgecontext_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -286,11 +287,14 @@ func TestLocale(t *testing.T) {
 	} {
 		t.Run(c.label, func(t *testing.T) {
 			err := edgeContextWithLocaleCode(c.locale)
-			if (err == nil) != c.valid {
-				if err == edgecontext.ErrInvalidLocaleCode {
-					t.Error(err)
-				} else {
-					t.Error("Expected InvalidLocaleCodeError")
+
+			if c.valid {
+				if err != nil {
+					t.Errorf("Did not expect error, got %v", err)
+				}
+			} else {
+				if !errors.Is(err, edgecontext.ErrInvalidLocaleCode) {
+					t.Errorf("Expected edgecontext.ErrInvalidLocaleCode, got %v", err)
 				}
 			}
 		})
