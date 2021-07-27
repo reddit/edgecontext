@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -20,9 +21,19 @@ import (
 // LoIDPrefix is the prefix for all LoIDs.
 const LoIDPrefix = "t2_"
 
-// ErrLoIDWrongPrefix is an error could be returned by New() when passed in LoID
-// does not have the correct prefix.
-var ErrLoIDWrongPrefix = errors.New("edgecontext: loid should have " + LoIDPrefix + " prefix")
+// LocaleRegex validates that locale codes are correctly formatted. They can contain
+// either a language, or a language and region specifier separated by an underscore.
+// e.g. en, en_US
+var LocaleRegex = regexp.MustCompile(`^[a-z]{2}(_[A-Z]{2})?$`)
+
+var (
+	// ErrLoIDWrongPrefix is an error could be returned by New() when passed in LoID
+	// does not have the correct prefix.
+	ErrLoIDWrongPrefix = errors.New("edgecontext: loid should have " + LoIDPrefix + " prefix")
+
+	// ErrInvalidLocaleCode is returned by New() when an invalid locale code is passed in.
+	ErrInvalidLocaleCode = errors.New("edgecontext: locale code should match format: en, en_US")
+)
 
 // An Impl is an initialized edge context implementation.
 //
@@ -131,6 +142,8 @@ type NewArgs struct {
 	CountryCode string
 
 	RequestID string
+
+	LocaleCode string
 }
 
 // New creates a new EdgeRequestContext from scratch.
@@ -173,6 +186,15 @@ func New(ctx context.Context, impl *Impl, args NewArgs) (*EdgeRequestContext, er
 			ReadableID: args.RequestID,
 		}
 	}
+	if args.LocaleCode != "" {
+		if !LocaleRegex.MatchString(args.LocaleCode) {
+			return nil, ErrInvalidLocaleCode
+		}
+		request.Locale = &ecthrift.Locale{
+			LocaleCode: ecthrift.LocaleCode(args.LocaleCode),
+		}
+	}
+
 	request.AuthenticationToken = ecthrift.AuthenticationToken(args.AuthToken)
 
 	header, err := serializerPool.WriteString(ctx, request)
@@ -220,6 +242,9 @@ func FromHeader(ctx context.Context, header string, impl *Impl) (*EdgeRequestCon
 	}
 	if request.RequestID != nil {
 		raw.RequestID = request.RequestID.ReadableID
+	}
+	if request.Locale != nil {
+		raw.LocaleCode = string(request.Locale.LocaleCode)
 	}
 	return &EdgeRequestContext{
 		impl:   impl,

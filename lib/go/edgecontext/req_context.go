@@ -91,6 +91,11 @@ func (e *EdgeRequestContext) CountryCode() string {
 	return e.raw.CountryCode
 }
 
+// LocaleCode returns the IETF language code for the client
+func (e *EdgeRequestContext) LocaleCode() string {
+	return e.raw.LocaleCode
+}
+
 // OriginService returns the info about the origin of this request.
 func (e *EdgeRequestContext) OriginService() OriginService {
 	return OriginService{

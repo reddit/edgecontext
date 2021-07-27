@@ -37,9 +37,16 @@ class Loid(object):
 
     """
 
-    __slots__ = ("id", "created_ms")
+    __slots__ = (
+        "id",
+        "created_ms",
+    )
 
-    def __init__(self, id=None, created_ms=None):
+    def __init__(
+        self,
+        id=None,
+        created_ms=None,
+    ):
         self.id = id
         self.created_ms = created_ms
 
@@ -130,7 +137,10 @@ class Session(object):
 
     __slots__ = ("id",)
 
-    def __init__(self, id=None):
+    def __init__(
+        self,
+        id=None,
+    ):
         self.id = id
 
     def read(self, iprot):
@@ -211,7 +221,10 @@ class Device(object):
 
     __slots__ = ("id",)
 
-    def __init__(self, id=None):
+    def __init__(
+        self,
+        id=None,
+    ):
         self.id = id
 
     def read(self, iprot):
@@ -293,7 +306,10 @@ class OriginService(object):
 
     __slots__ = ("name",)
 
-    def __init__(self, name=None):
+    def __init__(
+        self,
+        name=None,
+    ):
         self.name = name
 
     def read(self, iprot):
@@ -367,13 +383,16 @@ class Geolocation(object):
 
 
     Attributes:
-     - country_code: The country code of the requesting client.
+     - country_code: The country code of the requesting client based on geographic location.
 
     """
 
     __slots__ = ("country_code",)
 
-    def __init__(self, country_code=None):
+    def __init__(
+        self,
+        country_code=None,
+    ):
         self.country_code = country_code
 
     def read(self, iprot):
@@ -454,7 +473,10 @@ class RequestId(object):
 
     __slots__ = ("readable_id",)
 
-    def __init__(self, readable_id=None):
+    def __init__(
+        self,
+        readable_id=None,
+    ):
         self.readable_id = readable_id
 
     def read(self, iprot):
@@ -519,6 +541,92 @@ class RequestId(object):
         return not (self == other)
 
 
+class Locale(object):
+    """
+    Locale data from a request to our services that we want to
+    propagate between services.
+
+    This model is a component of the "Edge-Request" header.  You should not need to
+    interact with this model directly, but rather through the EdgeRequestContext
+    interface provided by baseplate.
+
+
+    Attributes:
+     - locale_code: IETF language code representing the client locale preferences.
+    Can be either {lang} or {lang}_{region} format. e.g. en, en_US
+
+    """
+
+    __slots__ = ("locale_code",)
+
+    def __init__(
+        self,
+        locale_code=None,
+    ):
+        self.locale_code = locale_code
+
+    def read(self, iprot):
+        if (
+            iprot._fast_decode is not None
+            and isinstance(iprot.trans, TTransport.CReadableTransport)
+            and self.thrift_spec is not None
+        ):
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.STRING:
+                    self.locale_code = (
+                        iprot.readString().decode("utf-8", errors="replace")
+                        if sys.version_info[0] == 2
+                        else iprot.readString()
+                    )
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin("Locale")
+        if self.locale_code is not None:
+            oprot.writeFieldBegin("locale_code", TType.STRING, 1)
+            oprot.writeString(
+                self.locale_code.encode("utf-8") if sys.version_info[0] == 2 else self.locale_code
+            )
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        return
+
+    def __repr__(self):
+        L = ["%s=%r" % (key, getattr(self, key)) for key in self.__slots__]
+        return "%s(%s)" % (self.__class__.__name__, ", ".join(L))
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        for attr in self.__slots__:
+            my_val = getattr(self, attr)
+            other_val = getattr(other, attr)
+            if my_val != other_val:
+                return False
+        return True
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
 class Request(object):
     """
     Container model for the Edge-Request context header.
@@ -537,6 +645,7 @@ class Request(object):
      - origin_service
      - geolocation
      - request_id
+     - locale
 
     """
 
@@ -548,6 +657,7 @@ class Request(object):
         "origin_service",
         "geolocation",
         "request_id",
+        "locale",
     )
 
     def __init__(
@@ -559,6 +669,7 @@ class Request(object):
         origin_service=None,
         geolocation=None,
         request_id=None,
+        locale=None,
     ):
         self.loid = loid
         self.session = session
@@ -567,6 +678,7 @@ class Request(object):
         self.origin_service = origin_service
         self.geolocation = geolocation
         self.request_id = request_id
+        self.locale = locale
 
     def read(self, iprot):
         if (
@@ -626,6 +738,12 @@ class Request(object):
                     self.request_id.read(iprot)
                 else:
                     iprot.skip(ftype)
+            elif fid == 8:
+                if ftype == TType.STRUCT:
+                    self.locale = Locale()
+                    self.locale.read(iprot)
+                else:
+                    iprot.skip(ftype)
             else:
                 iprot.skip(ftype)
             iprot.readFieldEnd()
@@ -668,6 +786,10 @@ class Request(object):
             oprot.writeFieldBegin("request_id", TType.STRUCT, 7)
             self.request_id.write(oprot)
             oprot.writeFieldEnd()
+        if self.locale is not None:
+            oprot.writeFieldBegin("locale", TType.STRUCT, 8)
+            self.locale.write(oprot)
+            oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
 
@@ -695,29 +817,146 @@ class Request(object):
 all_structs.append(Loid)
 Loid.thrift_spec = (
     None,  # 0
-    (1, TType.STRING, "id", "UTF8", None),  # 1
-    (2, TType.I64, "created_ms", None, None),  # 2
+    (
+        1,
+        TType.STRING,
+        "id",
+        "UTF8",
+        None,
+    ),  # 1
+    (
+        2,
+        TType.I64,
+        "created_ms",
+        None,
+        None,
+    ),  # 2
 )
 all_structs.append(Session)
-Session.thrift_spec = (None, (1, TType.STRING, "id", "UTF8", None))  # 0  # 1
+Session.thrift_spec = (
+    None,  # 0
+    (
+        1,
+        TType.STRING,
+        "id",
+        "UTF8",
+        None,
+    ),  # 1
+)
 all_structs.append(Device)
-Device.thrift_spec = (None, (1, TType.STRING, "id", "UTF8", None))  # 0  # 1
+Device.thrift_spec = (
+    None,  # 0
+    (
+        1,
+        TType.STRING,
+        "id",
+        "UTF8",
+        None,
+    ),  # 1
+)
 all_structs.append(OriginService)
-OriginService.thrift_spec = (None, (1, TType.STRING, "name", "UTF8", None))  # 0  # 1
+OriginService.thrift_spec = (
+    None,  # 0
+    (
+        1,
+        TType.STRING,
+        "name",
+        "UTF8",
+        None,
+    ),  # 1
+)
 all_structs.append(Geolocation)
-Geolocation.thrift_spec = (None, (1, TType.STRING, "country_code", "UTF8", None))  # 0  # 1
+Geolocation.thrift_spec = (
+    None,  # 0
+    (
+        1,
+        TType.STRING,
+        "country_code",
+        "UTF8",
+        None,
+    ),  # 1
+)
 all_structs.append(RequestId)
-RequestId.thrift_spec = (None, (1, TType.STRING, "readable_id", "UTF8", None))  # 0  # 1
+RequestId.thrift_spec = (
+    None,  # 0
+    (
+        1,
+        TType.STRING,
+        "readable_id",
+        "UTF8",
+        None,
+    ),  # 1
+)
+all_structs.append(Locale)
+Locale.thrift_spec = (
+    None,  # 0
+    (
+        1,
+        TType.STRING,
+        "locale_code",
+        "UTF8",
+        None,
+    ),  # 1
+)
 all_structs.append(Request)
 Request.thrift_spec = (
     None,  # 0
-    (1, TType.STRUCT, "loid", [Loid, None], None),  # 1
-    (2, TType.STRUCT, "session", [Session, None], None),  # 2
-    (3, TType.STRING, "authentication_token", "UTF8", None),  # 3
-    (4, TType.STRUCT, "device", [Device, None], None),  # 4
-    (5, TType.STRUCT, "origin_service", [OriginService, None], None),  # 5
-    (6, TType.STRUCT, "geolocation", [Geolocation, None], None),  # 6
-    (7, TType.STRUCT, "request_id", [RequestId, None], None),  # 7
+    (
+        1,
+        TType.STRUCT,
+        "loid",
+        [Loid, None],
+        None,
+    ),  # 1
+    (
+        2,
+        TType.STRUCT,
+        "session",
+        [Session, None],
+        None,
+    ),  # 2
+    (
+        3,
+        TType.STRING,
+        "authentication_token",
+        "UTF8",
+        None,
+    ),  # 3
+    (
+        4,
+        TType.STRUCT,
+        "device",
+        [Device, None],
+        None,
+    ),  # 4
+    (
+        5,
+        TType.STRUCT,
+        "origin_service",
+        [OriginService, None],
+        None,
+    ),  # 5
+    (
+        6,
+        TType.STRUCT,
+        "geolocation",
+        [Geolocation, None],
+        None,
+    ),  # 6
+    (
+        7,
+        TType.STRUCT,
+        "request_id",
+        [RequestId, None],
+        None,
+    ),  # 7
+    (
+        8,
+        TType.STRUCT,
+        "locale",
+        [Locale, None],
+        None,
+    ),  # 8
 )
 fix_spec(all_structs)
 del all_structs

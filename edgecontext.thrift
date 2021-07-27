@@ -7,7 +7,17 @@ namespace java com.reddit.edgecontext
 */
 typedef string AuthenticationToken
 
-/** A two-character ISO 3166-1 country code
+/** IETF language tag representing the preferred locale for
+the client, used for providing localized content. Consists of
+an ISO 639-1 primary language subtag and an optional
+ISO 3166-1 alpha-2 region subtag separated by an underscore.
+e.g. en, en_US
+
+*/
+typedef string LocaleCode
+
+/** A two-character ISO 3166-1 country code representing the current
+geographic location of the client.
 
 */
 typedef string CountryCode
@@ -86,7 +96,7 @@ interface provided by baseplate.
 
 */
 struct Geolocation {
-    /** The country code of the requesting client.
+    /** The country code of the requesting client based on geographic location.
     */
     1: CountryCode country_code
 }
@@ -102,6 +112,21 @@ struct RequestId {
     /** The id of this Edge Request, in the most human-readable format.
     */
     1: string readable_id
+}
+
+/** Locale data from a request to our services that we want to
+propagate between services.
+
+This model is a component of the "Edge-Request" header.  You should not need to
+interact with this model directly, but rather through the EdgeRequestContext
+interface provided by baseplate.
+
+*/
+struct Locale {
+    /** IETF language code representing the client locale preferences.
+    Can be either {lang} or {lang}_{region} format. e.g. en, en_US
+    */
+    1: LocaleCode locale_code
 }
 
 /** Container model for the Edge-Request context header.
@@ -120,4 +145,5 @@ struct Request {
     5: OriginService origin_service;
     6: Geolocation geolocation;
     7: optional RequestId request_id;
+    8: optional Locale locale;
 }

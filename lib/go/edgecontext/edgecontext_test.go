@@ -2,6 +2,7 @@ package edgecontext_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -16,7 +17,7 @@ import (
 const (
 	// copied from https://github.com/reddit/edgecontext.py/blob/420e58728ee7085a2f91c5db45df233142b251f9/tests/edge_context_tests.py#L55-L58
 	headerWithNoAuth            = "\x0c\x00\x01\x0b\x00\x01\x00\x00\x00\x0bt2_deadbeef\n\x00\x02\x00\x00\x00\x00\x00\x01\x86\xa0\x00\x0c\x00\x02\x0b\x00\x01\x00\x00\x00\x08beefdead\x00\x0c\x00\x04\x0b\x00\x01\x00\x00\x00$becc50f6-ff3d-407a-aa49-fa49531363be\x00\x00"
-	headerWithValidAuth         = "\x0c\x00\x01\x0b\x00\x01\x00\x00\x00\x0bt2_deadbeef\n\x00\x02\x00\x00\x00\x00\x00\x01\x86\xa0\x00\x0c\x00\x02\x0b\x00\x01\x00\x00\x00\x08beefdead\x00\x0b\x00\x03\x00\x00\x01\xaeeyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0Ml9leGFtcGxlIiwiZXhwIjoyNTI0NjA4MDAwfQ.dRzzfc9GmzyqfAbl6n_C55JJueraXk9pp3v0UYXw0ic6W_9RVa7aA1zJWm7slX9lbuYldwUtHvqaSsOpjF34uqr0-yMoRDVpIrbkwwJkNuAE8kbXGYFmXf3Ip25wMHtSXn64y2gJN8TtgAAnzjjGs9yzK9BhHILCDZTtmPbsUepxKmWTiEX2BdurUMZzinbcvcKY4Rb_Fl0pwsmBJFs7nmk5PvTyC6qivCd8ZmMc7dwL47mwy_7ouqdqKyUEdLoTEQ_psuy9REw57PRe00XCHaTSTRDCLmy4gAN6J0J056XoRHLfFcNbtzAmqmtJ_D9HGIIXPKq-KaggwK9I4qLX7g\x0c\x00\x04\x0b\x00\x01\x00\x00\x00$becc50f6-ff3d-407a-aa49-fa49531363be\x00\x0c\x00\x05\x0b\x00\x01\x00\x00\x00\tbaseplate\x00\x0c\x00\x06\x0b\x00\x01\x00\x00\x00\x02OK\x00\x0c\x00\x07\x0b\x00\x01\x00\x00\x00\x24" + expectedRequestID + "\x00\x00"
+	headerWithValidAuth         = "\x0c\x00\x01\x0b\x00\x01\x00\x00\x00\x0bt2_deadbeef\n\x00\x02\x00\x00\x00\x00\x00\x01\x86\xa0\x00\x0c\x00\x02\x0b\x00\x01\x00\x00\x00\x08beefdead\x00\x0b\x00\x03\x00\x00\x01\xaeeyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0Ml9leGFtcGxlIiwiZXhwIjoyNTI0NjA4MDAwfQ.dRzzfc9GmzyqfAbl6n_C55JJueraXk9pp3v0UYXw0ic6W_9RVa7aA1zJWm7slX9lbuYldwUtHvqaSsOpjF34uqr0-yMoRDVpIrbkwwJkNuAE8kbXGYFmXf3Ip25wMHtSXn64y2gJN8TtgAAnzjjGs9yzK9BhHILCDZTtmPbsUepxKmWTiEX2BdurUMZzinbcvcKY4Rb_Fl0pwsmBJFs7nmk5PvTyC6qivCd8ZmMc7dwL47mwy_7ouqdqKyUEdLoTEQ_psuy9REw57PRe00XCHaTSTRDCLmy4gAN6J0J056XoRHLfFcNbtzAmqmtJ_D9HGIIXPKq-KaggwK9I4qLX7g\x0c\x00\x04\x0b\x00\x01\x00\x00\x00$becc50f6-ff3d-407a-aa49-fa49531363be\x00\x0c\x00\x05\x0b\x00\x01\x00\x00\x00\tbaseplate\x00\x0c\x00\x06\x0b\x00\x01\x00\x00\x00\x02OK\x00\x0c\x00\x07\x0b\x00\x01\x00\x00\x00\x24" + expectedRequestID + "\x00\f\x00\b\v\x00\x01\x00\x00\x00\x05en_US\x00\x00"
 	headerWithExpiredAuth       = "\x0c\x00\x01\x0b\x00\x01\x00\x00\x00\x0bt2_deadbeef\n\x00\x02\x00\x00\x00\x00\x00\x01\x86\xa0\x00\x0c\x00\x02\x0b\x00\x01\x00\x00\x00\x08beefdead\x00\x0b\x00\x03\x00\x00\x01\xaeeyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0Ml9leGFtcGxlIiwiZXhwIjoxMjYyMzA0MDAwfQ.iUD0J2blW-HGtH86s66msBXymCRCgyxAZJ6xX2_SXD-kegm-KjOlIemMWFZtsNv9DJI147cNP81_gssewvUnhIHLVvXWCTOROasXbA9Yf2GUsjxoGSB7474ziPOZquAJKo8ikERlhOOVk3r4xZIIYCuc4vGZ7NfqFxjDGKAWj5Tt4VUiWXK1AdxQck24GyNOSXs677vIJnoD8EkgWqNuuwY-iFOAPVcoHmEuzhU_yUeQnY8D-VztJkip5-YPEnuuf-dTSmPbdm9ZTOP8gjTsG0Sdvb9NdLId0nEwawRy8CfFEGQulqHgd1bqTm25U-NyXQi7zroi1GEdykZ3w9fVNQ\x0c\x00\x07\x00\x00"
 	headerWithAnonAuth          = "\x0c\x00\x01\x0b\x00\x01\x00\x00\x00\x0bt2_deadbeef\n\x00\x02\x00\x00\x00\x00\x00\x01\x86\xa0\x00\x0c\x00\x02\x0b\x00\x01\x00\x00\x00\x08beefdead\x00\x0b\x00\x03\x00\x00\x01\xc0eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJhbm9ueW1vdXMiXSwic3ViIjpudWxsLCJleHAiOjI1MjQ2MDgwMDB9.gQDiVzOUh70mKKK-YBTnLHWBOEuQyRllEE1-EIMfy3x5K8PsH9FB6Oy9S5HbILjfGFNrIBeux9HyW6hBDikoZDhn5QWyPNitL1pzMNONGGrXzSfaDoDbFy4MLD03A7zjG3qWBn_wLjgzUXX6qVX6W_gWO7dMqrq0iFvEegue-xQ1HGiXfPgnTrXRRovUO3JHy1LcZsmOjltYj5VGUTWXodBM8ObKEealDxg8yskEPy0IuujNMmb9eIyuHB8Ozzpg-lr790lxP37s5HCf18vrZ-IhRmLcLCqm5WSFyq_Ld2ByblBKL9pPst1AZYZTXNRIqovTAqr6v0-xjUeJ1iho9A\x0c\x00\x07\x00\x00"
 	headerWithReadableRequestID = ("\x0c\x00\x01\x00\x0c\x00\x02\x00\x0c\x00\x04\x00\x0c\x00\x05\x00\x0c\x00\x06\x00" +
@@ -34,6 +35,7 @@ const (
 
 const (
 	expectedCountryCode = "OK"
+	expectedLocaleCode  = "en_US"
 	expectedDeviceID    = "becc50f6-ff3d-407a-aa49-fa49531363be"
 	expectedLoID        = "t2_deadbeef"
 	expectedOrigin      = "baseplate"
@@ -230,6 +232,7 @@ func TestNew(t *testing.T) {
 			CountryCode:       expectedCountryCode,
 			OriginServiceName: expectedOrigin,
 			RequestID:         expectedRequestID,
+			LocaleCode:        expectedLocaleCode,
 		},
 	)
 	if err != nil {
@@ -238,6 +241,76 @@ func TestNew(t *testing.T) {
 	if e.Header() != headerWithValidAuth {
 		t.Errorf("Header expected %q, got %q", headerWithValidAuth, e.Header())
 	}
+}
+
+func TestLocale(t *testing.T) {
+	for _, c := range []struct {
+		label  string
+		locale string
+		valid  bool
+	}{
+		{
+			label:  "valid-language",
+			locale: "es",
+			valid:  true,
+		},
+		{
+			label:  "valid-language-valid-region",
+			locale: "es_MX",
+			valid:  true,
+		},
+		{
+			label:  "valid-language-invalid-region",
+			locale: "es_MEX",
+			valid:  false,
+		},
+		{
+			label:  "invalid-language-valid-region",
+			locale: "esp_MX",
+			valid:  false,
+		},
+		{
+			label:  "invalid-language-invalid-region",
+			locale: "esp_MEX",
+			valid:  false,
+		},
+		{
+			label:  "invalid-separator",
+			locale: "es-MX",
+			valid:  false,
+		},
+		{
+			label:  "invalid-capitalization",
+			locale: "ES_MX",
+			valid:  false,
+		},
+	} {
+		t.Run(c.label, func(t *testing.T) {
+			err := edgeContextWithLocaleCode(c.locale)
+
+			if c.valid {
+				if err != nil {
+					t.Errorf("Did not expect error, got %v", err)
+				}
+			} else {
+				if !errors.Is(err, edgecontext.ErrInvalidLocaleCode) {
+					t.Errorf("Expected edgecontext.ErrInvalidLocaleCode, got %v", err)
+				}
+			}
+		})
+	}
+}
+
+func edgeContextWithLocaleCode(l string) error {
+	ctx := context.Background()
+	_, err := edgecontext.New(
+		ctx,
+		globalTestImpl,
+		edgecontext.NewArgs{
+			LocaleCode: l,
+		},
+	)
+	return err
 }
 
 func TestFromHeader(t *testing.T) {
@@ -384,6 +457,14 @@ func TestFromHeader(t *testing.T) {
 					"Expected device id %q, got %q",
 					expectedCountryCode,
 					e.CountryCode(),
+				)
+			}
+
+			if e.LocaleCode() != expectedLocaleCode {
+				t.Errorf(
+					"Expected locale code %q, got %q",
+					expectedLocaleCode,
+					e.LocaleCode(),
 				)
 			}
 
