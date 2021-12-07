@@ -1,5 +1,5 @@
 FROM ghcr.io/reddit/thrift-compiler:0.14.1 AS thrift
-FROM docker.io/library/golang:1.16.1-buster AS go
+FROM docker.io/library/golang:1.18.2-buster AS go
 FROM python:3.9
 
 COPY --from=thrift /usr/local/bin/thrift /usr/local/bin/thrift

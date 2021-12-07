@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/reddit/baseplate.go/detach"
 	"github.com/reddit/baseplate.go/ecinterface"
 	"github.com/reddit/baseplate.go/log"
 	"github.com/reddit/baseplate.go/secrets"
@@ -17,6 +18,22 @@ import (
 
 	ecthrift "github.com/reddit/edgecontext/lib/go/internal/reddit/edgecontext"
 )
+
+func init() {
+	copyEC := func(dst, src context.Context) context.Context {
+		if ec, ok := GetEdgeContext(src); ok {
+			dst = SetEdgeContext(dst, ec)
+		}
+		return dst
+	}
+
+	detach.Register(detach.Hooks{
+		Inline: copyEC,
+		Async: func(dst, src context.Context, next func(ctx context.Context)) {
+			next(copyEC(dst, src))
+		},
+	})
+}
 
 // LoIDPrefix is the prefix for all LoIDs.
 const LoIDPrefix = "t2_"
