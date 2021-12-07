@@ -8,6 +8,7 @@ import (
 
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/gofrs/uuid"
+	"github.com/reddit/baseplate.go/detach"
 	"github.com/reddit/baseplate.go/experiments"
 	"github.com/reddit/baseplate.go/timebp"
 
@@ -763,4 +764,52 @@ func TestFromHeader(t *testing.T) {
 			}
 		},
 	)
+}
+
+func TestDetachIntegration(t *testing.T) {
+	ctx := context.Background()
+	e, err := edgecontext.New(
+		ctx,
+		globalTestImpl,
+		edgecontext.NewArgs{
+			LoID:              expectedLoID,
+			LoIDCreatedAt:     expectedCookieTime,
+			SessionID:         expectedSessionID,
+			AuthToken:         validToken,
+			DeviceID:          expectedDeviceID,
+			CountryCode:       expectedCountryCode,
+			OriginServiceName: expectedOrigin,
+			RequestID:         expectedRequestID,
+			LocaleCode:        expectedLocaleCode,
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx = edgecontext.SetEdgeContext(ctx, e)
+
+	t.Run("inline", func(t *testing.T) {
+		inlineCtx, cancel := detach.Inline(ctx, time.Second)
+		defer cancel()
+
+		if ec, ok := edgecontext.GetEdgeContext(inlineCtx); ok {
+			if ec.Header() != e.Header() {
+				t.Fatalf("headers on edge contexts did not match\n\texpected: %q\n\tgot: %q", e.Header(), ec.Header())
+			}
+		} else {
+			t.Fatal("edge context was not set on detached context")
+		}
+	})
+
+	t.Run("async", func(t *testing.T) {
+		detach.Async(ctx, func(asyncCtx context.Context) {
+			if ec, ok := edgecontext.GetEdgeContext(asyncCtx); ok {
+				if ec.Header() != e.Header() {
+					t.Fatalf("headers on edge contexts did not match\n\texpected: %q\n\tgot: %q", e.Header(), ec.Header())
+				}
+			} else {
+				t.Fatal("edge context was not set on detached context")
+			}
+		})
+	})
 }
