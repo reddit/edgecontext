@@ -7,4 +7,5 @@ require (
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/reddit/baseplate.go v0.8.0
 	github.com/reddit/jwt-go/v3 v3.2.2
+	golang.org/x/text v0.3.7
 )
