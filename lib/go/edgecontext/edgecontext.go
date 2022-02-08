@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/reddit/baseplate.go/log"
 	"github.com/reddit/baseplate.go/secrets"
 	"github.com/reddit/baseplate.go/timebp"
+	"golang.org/x/text/language"
 
 	ecthrift "github.com/reddit/edgecontext/lib/go/internal/reddit/edgecontext"
 )
@@ -21,18 +21,13 @@ import (
 // LoIDPrefix is the prefix for all LoIDs.
 const LoIDPrefix = "t2_"
 
-// LocaleRegex validates that locale codes are correctly formatted. They can contain
-// either a language, or a language and region specifier separated by an underscore.
-// e.g. en, en_US
-var LocaleRegex = regexp.MustCompile(`^[a-z]{2}(_[A-Z]{2})?$`)
-
 var (
 	// ErrLoIDWrongPrefix is an error could be returned by New() when passed in LoID
 	// does not have the correct prefix.
 	ErrLoIDWrongPrefix = errors.New("edgecontext: loid should have " + LoIDPrefix + " prefix")
 
 	// ErrInvalidLocaleCode is returned by New() when an invalid locale code is passed in.
-	ErrInvalidLocaleCode = errors.New("edgecontext: locale code should match format: en, en_US")
+	ErrInvalidLocaleCode = errors.New("edgecontext: locale code should be in valid BCP47 format: en-US")
 )
 
 // An Impl is an initialized edge context implementation.
@@ -187,11 +182,12 @@ func New(ctx context.Context, impl *Impl, args NewArgs) (*EdgeRequestContext, er
 		}
 	}
 	if args.LocaleCode != "" {
-		if !LocaleRegex.MatchString(args.LocaleCode) {
+		parsedLocaleTag, err := language.Parse(args.LocaleCode)
+		if err != nil {
 			return nil, ErrInvalidLocaleCode
 		}
 		request.Locale = &ecthrift.Locale{
-			LocaleCode: ecthrift.LocaleCode(args.LocaleCode),
+			LocaleCode: ecthrift.LocaleCode(parsedLocaleTag.String()),
 		}
 	}
 

@@ -599,9 +599,9 @@ class EdgeContextFactory(BaseEdgeContextFactory):
         if locale_code is not None and not LOCALE_CODE_RE.match(locale_code):
             raise ValueError(
                 f"locale_code <{locale_code}> is not in a valid format, it should be in "
-                "IETF language code format – an ISO 639-1 primary language subtag and an"
-                "optional ISO 3166-1 alpha-2 region subtag separated by an underscore."
-                "e.g. en_US"
+                "IETF BCP47 language code format."
+                "e.g. en-US"
+                "https://tools.ietf.org/rfc/bcp/bcp47.txt"
             )
 
         t_request = TRequest(
