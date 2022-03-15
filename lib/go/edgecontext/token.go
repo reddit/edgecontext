@@ -1,8 +1,8 @@
 package edgecontext
 
 import (
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/reddit/baseplate.go/timebp"
-	jwt "github.com/reddit/jwt-go/v3"
 )
 
 // AuthenticationToken defines the json format of the authentication token.
