@@ -16,6 +16,11 @@ e.g. en, en_US
 */
 typedef string LocaleCode
 
+/** Locale code forced to the BCP-47 format (e.g. de-DE, pt-BR, etc.).
+
+*/
+typedef string UnifiedLocaleCode
+
 /** A two-character ISO 3166-1 country code representing the current
 geographic location of the client.
 
@@ -126,7 +131,12 @@ struct Locale {
     /** IETF language code representing the client locale preferences.
     Can be either {lang} or {lang}_{region} format. e.g. en, en_US
     */
-    1: LocaleCode locale_code
+    1: LocaleCode locale_code;
+    /** Locale code forced to the BCP-47 format (e.g. de-DE, pt-BR, etc.).
+    This field is introduced to be used for localization instead of locale_code.
+    The locale_code is saved for backward compatibility.
+    */
+    2: UnifiedLocaleCode unified_locale_code;
 }
 
 /** Container model for the Edge-Request context header.

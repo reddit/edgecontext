@@ -554,16 +554,24 @@ class Locale(object):
     Attributes:
      - locale_code: IETF language code representing the client locale preferences.
     Can be either {lang} or {lang}_{region} format. e.g. en, en_US
+     - unified_locale_code: Locale code forced to the BCP-47 format (e.g. de-DE, pt-BR, etc.).
+    This field is introduced to be used for localization instead of locale_code.
+    The locale_code is saved for backward compatibility.
 
     """
 
-    __slots__ = ("locale_code",)
+    __slots__ = (
+        "locale_code",
+        "unified_locale_code",
+    )
 
     def __init__(
         self,
         locale_code=None,
+        unified_locale_code=None,
     ):
         self.locale_code = locale_code
+        self.unified_locale_code = unified_locale_code
 
     def read(self, iprot):
         if (
@@ -587,6 +595,15 @@ class Locale(object):
                     )
                 else:
                     iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.STRING:
+                    self.unified_locale_code = (
+                        iprot.readString().decode("utf-8", errors="replace")
+                        if sys.version_info[0] == 2
+                        else iprot.readString()
+                    )
+                else:
+                    iprot.skip(ftype)
             else:
                 iprot.skip(ftype)
             iprot.readFieldEnd()
@@ -601,6 +618,14 @@ class Locale(object):
             oprot.writeFieldBegin("locale_code", TType.STRING, 1)
             oprot.writeString(
                 self.locale_code.encode("utf-8") if sys.version_info[0] == 2 else self.locale_code
+            )
+            oprot.writeFieldEnd()
+        if self.unified_locale_code is not None:
+            oprot.writeFieldBegin("unified_locale_code", TType.STRING, 2)
+            oprot.writeString(
+                self.unified_locale_code.encode("utf-8")
+                if sys.version_info[0] == 2
+                else self.unified_locale_code
             )
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
@@ -897,6 +922,13 @@ Locale.thrift_spec = (
         "UTF8",
         None,
     ),  # 1
+    (
+        2,
+        TType.STRING,
+        "unified_locale_code",
+        "UTF8",
+        None,
+    ),  # 2
 )
 all_structs.append(Request)
 Request.thrift_spec = (
