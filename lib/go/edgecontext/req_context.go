@@ -96,6 +96,11 @@ func (e *EdgeRequestContext) LocaleCode() string {
 	return e.raw.LocaleCode
 }
 
+// UnifiedLocaleCode returns the language code forced to BCP-47 standard
+func (e *EdgeRequestContext) UnifiedLocaleCode() string {
+	return e.raw.UnifiedLocaleCode
+}
+
 // OriginService returns the info about the origin of this request.
 func (e *EdgeRequestContext) OriginService() OriginService {
 	return OriginService{

@@ -161,6 +161,8 @@ type NewArgs struct {
 	RequestID string
 
 	LocaleCode string
+
+	UnifiedLocaleCode string
 }
 
 // New creates a new EdgeRequestContext from scratch.
@@ -207,8 +209,15 @@ func New(ctx context.Context, impl *Impl, args NewArgs) (*EdgeRequestContext, er
 		if !LocaleRegex.MatchString(args.LocaleCode) {
 			return nil, ErrInvalidLocaleCode
 		}
-		request.Locale = &ecthrift.Locale{
-			LocaleCode: ecthrift.LocaleCode(args.LocaleCode),
+		if args.UnifiedLocaleCode != "" {
+			request.Locale = &ecthrift.Locale{
+				LocaleCode:        ecthrift.LocaleCode(args.LocaleCode),
+				UnifiedLocaleCode: ecthrift.UnifiedLocaleCode(args.UnifiedLocaleCode),
+			}
+		} else {
+			request.Locale = &ecthrift.Locale{
+				LocaleCode: ecthrift.LocaleCode(args.LocaleCode),
+			}
 		}
 	}
 

@@ -226,6 +226,9 @@ class Locale(NamedTuple):
     locale_code: str
     """IETF language tag representing the preferred locale for the client."""
 
+    unified_locale_code: str
+    """ Locale code forced to BCP-47 standard """
+
 
 class User(NamedTuple):
     """Wrapper for the user values in AuthenticationToken and the LoId cookie."""
@@ -482,6 +485,7 @@ class EdgeContext:
         """:py:class:`~reddit_edgecontext.Locale` object for the current context."""
         return Locale(
             locale_code=self._t_request.locale.locale_code,
+            unified_locale_code=self._t_request.locale.unified_locale_code
         )
 
     @cached_property
@@ -538,6 +542,7 @@ class EdgeContextFactory(BaseEdgeContextFactory):
         country_code: Optional[str] = None,
         request_id: Optional[str] = None,
         locale_code: Optional[str] = None,
+        unified_locale_code: Optional[str] = None,
     ) -> EdgeContext:
         """Return a new EdgeContext object made from scratch.
 
@@ -582,6 +587,7 @@ class EdgeContextFactory(BaseEdgeContextFactory):
             the underlying request that this EdgeContext represents.
         :param locale_code: IETF language tag representing the preferred locale
             for the client.
+        :param unified_locale_code: locale code forced to BCP-47 standard
 
         """
         if loid_id is not None and not loid_id.startswith("t2_"):
@@ -612,7 +618,7 @@ class EdgeContextFactory(BaseEdgeContextFactory):
             origin_service=TOriginService(name=origin_service_name),
             geolocation=TGeolocation(country_code=country_code),
             request_id=TRequestId(readable_id=request_id),
-            locale=TLocale(locale_code=locale_code),
+            locale=TLocale(locale_code=locale_code, unified_locale_code=unified_locale_code),
         )
         header = TSerialization.serialize(t_request, EdgeContext._HEADER_PROTOCOL_FACTORY)
 
