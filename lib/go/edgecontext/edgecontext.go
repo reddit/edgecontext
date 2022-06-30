@@ -43,6 +43,10 @@ const LoIDPrefix = "t2_"
 // e.g. en, en_US
 var LocaleRegex = regexp.MustCompile(`^[a-z]{2}(_[A-Z]{2})?$`)
 
+// UnifiedLocaleRegex validates locale codes format.
+// The same as LocaleRegex, but language and region specifier separated by a hyphen.
+var UnifiedLocaleRegex = regexp.MustCompile(`^[a-z]{2}(\-[A-Z]{2})?$`)
+
 var (
 	// ErrLoIDWrongPrefix is an error could be returned by New() when passed in LoID
 	// does not have the correct prefix.
@@ -50,6 +54,9 @@ var (
 
 	// ErrInvalidLocaleCode is returned by New() when an invalid locale code is passed in.
 	ErrInvalidLocaleCode = errors.New("edgecontext: locale code should match format: en, en_US")
+
+	// ErrInvalidUnifiedLocaleCode is returned by New() when an invalid unified locale code is passed in.
+	ErrInvalidUnifiedLocaleCode = errors.New("edgecontext: unified locale code should match BCP-47 format: en, en-US")
 )
 
 // An Impl is an initialized edge context implementation.
@@ -210,6 +217,9 @@ func New(ctx context.Context, impl *Impl, args NewArgs) (*EdgeRequestContext, er
 			return nil, ErrInvalidLocaleCode
 		}
 		if args.UnifiedLocaleCode != "" {
+			if !UnifiedLocaleRegex.MatchString(args.UnifiedLocaleCode) {
+				return nil, ErrInvalidUnifiedLocaleCode
+			}
 			request.Locale = &ecthrift.Locale{
 				LocaleCode:        ecthrift.LocaleCode(args.LocaleCode),
 				UnifiedLocaleCode: ecthrift.UnifiedLocaleCode(args.UnifiedLocaleCode),

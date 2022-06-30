@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 COUNTRY_CODE_RE = re.compile(r"^[A-Z]{2}$")
 LOCALE_CODE_RE = re.compile(r"^[a-z]{2}(_[A-Z]{2})?$")
+UNIFIED_LOCALE_CODE_RE = re.compile(r"^[a-z]{2}(\-[A-Z]{2})?$")
 
 
 class NoAuthenticationError(Exception):
@@ -485,7 +486,7 @@ class EdgeContext:
         """:py:class:`~reddit_edgecontext.Locale` object for the current context."""
         return Locale(
             locale_code=self._t_request.locale.locale_code,
-            unified_locale_code=self._t_request.locale.unified_locale_code
+            unified_locale_code=self._t_request.locale.unified_locale_code,
         )
 
     @cached_property
@@ -608,6 +609,14 @@ class EdgeContextFactory(BaseEdgeContextFactory):
                 "IETF language code format – an ISO 639-1 primary language subtag and an"
                 "optional ISO 3166-1 alpha-2 region subtag separated by an underscore."
                 "e.g. en_US"
+            )
+
+        if unified_locale_code is not None and not UNIFIED_LOCALE_CODE_RE.match(
+            unified_locale_code
+        ):
+            raise ValueError(
+                f"unified_locale_code <{unified_locale_code}> is not in a valid format, it should be in BCP-47."
+                f"e.g. en-US"
             )
 
         t_request = TRequest(

@@ -554,9 +554,8 @@ class Locale(object):
     Attributes:
      - locale_code: IETF language code representing the client locale preferences.
     Can be either {lang} or {lang}_{region} format. e.g. en, en_US
-     - unified_locale_code: Locale code forced to the BCP-47 format (e.g. de-DE, pt-BR, etc.).
+     - unified_locale_code: Locale code forced to the BCP-47 format (hyphen separated e.g de-DE, pt-BR, etc.).
     This field is introduced to be used for localization instead of locale_code.
-    The locale_code is saved for backward compatibility.
 
     """
 

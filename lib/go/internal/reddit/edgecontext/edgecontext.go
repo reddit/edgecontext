@@ -754,9 +754,8 @@ func (p *RequestId) String() string {
 // Attributes:
 //  - LocaleCode: IETF language code representing the client locale preferences.
 // Can be either {lang} or {lang}_{region} format. e.g. en, en_US
-//  - UnifiedLocaleCode: Locale code forced to the BCP-47 format (e.g. de-DE, pt-BR, etc.).
+//  - UnifiedLocaleCode: Locale code forced to the BCP-47 format (hyphen separated e.g de-DE, pt-BR, etc.).
 // This field is introduced to be used for localization instead of locale_code.
-// The locale_code is saved for backward compatibility.
 type Locale struct {
   LocaleCode LocaleCode `thrift:"locale_code,1" db:"locale_code" json:"locale_code"`
   UnifiedLocaleCode UnifiedLocaleCode `thrift:"unified_locale_code,2" db:"unified_locale_code" json:"unified_locale_code"`
