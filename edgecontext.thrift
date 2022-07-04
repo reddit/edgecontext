@@ -132,8 +132,12 @@ struct Locale {
     Can be either {lang} or {lang}_{region} format. e.g. en, en_US
     */
     1: LocaleCode locale_code;
-    /** Locale code forced to the BCP-47 format (hyphen separated e.g de-DE, pt-BR, etc.).
-    This field is introduced to be used for localization instead of locale_code.
+    /** Locale code forced to the BCP-47 format 
+    Can be either {lang} or {lang}-{region} (hyphen separated) format e.g. de-DE, pt-BR, etc.
+    
+    This field is introduced to be used for localization instead of locale_code. 
+    
+    The locale_code is saved for backward compatibility.
     */
     2: UnifiedLocaleCode unified_locale_code;
 }

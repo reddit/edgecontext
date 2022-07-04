@@ -269,12 +269,12 @@ func TestLocale(t *testing.T) {
 		},
 		{
 			label:  "invalid-language-valid-region",
-			locale: "esp_MX",
+			locale: "espn_MX",
 			valid:  false,
 		},
 		{
 			label:  "invalid-language-invalid-region",
-			locale: "esp_MEX",
+			locale: "espn_MEX",
 			valid:  false,
 		},
 		{

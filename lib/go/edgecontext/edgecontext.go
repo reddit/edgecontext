@@ -41,11 +41,11 @@ const LoIDPrefix = "t2_"
 // LocaleRegex validates that locale codes are correctly formatted. They can contain
 // either a language, or a language and region specifier separated by an underscore.
 // e.g. en, en_US
-var LocaleRegex = regexp.MustCompile(`^[a-z]{2}(_[A-Z]{2})?$`)
+var LocaleRegex = regexp.MustCompile(`^[a-z]{2,3}(_[A-Z]{2})?$`)
 
 // UnifiedLocaleRegex validates locale codes format.
 // The same as LocaleRegex, but language and region specifier separated by a hyphen.
-var UnifiedLocaleRegex = regexp.MustCompile(`^[a-z]{2}(\-[A-Z]{2})?$`)
+var UnifiedLocaleRegex = regexp.MustCompile(`^[a-z]{2,3}(\-[A-Z]{2})?$`)
 
 var (
 	// ErrLoIDWrongPrefix is an error could be returned by New() when passed in LoID
