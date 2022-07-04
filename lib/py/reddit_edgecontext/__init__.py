@@ -34,8 +34,8 @@ logger = logging.getLogger(__name__)
 
 
 COUNTRY_CODE_RE = re.compile(r"^[A-Z]{2}$")
-LOCALE_CODE_RE = re.compile(r"^[a-z]{2}(_[A-Z]{2})?$")
-UNIFIED_LOCALE_CODE_RE = re.compile(r"^[a-z]{2}(\-[A-Z]{2})?$")
+LOCALE_CODE_RE = re.compile(r"^[a-z]{2,3}(_[A-Z]{2})?$")
+UNIFIED_LOCALE_CODE_RE = re.compile(r"^[a-z]{2,3}(\-[A-Z]{2})?$")
 
 
 class NoAuthenticationError(Exception):
