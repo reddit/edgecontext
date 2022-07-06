@@ -337,6 +337,11 @@ func TestNegotiatedLocale(t *testing.T) {
 			negotiatedLocale: "de-DE-1996",
 			valid:            true,
 		},
+		{
+			label:            "valid-number",
+			negotiatedLocale: "es-419",
+			valid:            true,
+		},
 	} {
 		t.Run(c.label, func(t *testing.T) {
 			err := edgeContextWithNegotiatedLocaleCode(c.negotiatedLocale)
