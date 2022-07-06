@@ -35,14 +35,14 @@ const (
 )
 
 const (
-	expectedCountryCode       = "OK"
-	expectedLocaleCode        = "en_US"
-	expectedUnifiedLocaleCode = "en-US"
-	expectedDeviceID          = "becc50f6-ff3d-407a-aa49-fa49531363be"
-	expectedLoID              = "t2_deadbeef"
-	expectedOrigin            = "baseplate"
-	expectedSessionID         = "beefdead"
-	expectedRequestID         = "2adaff94-9067-4de0-a00b-79fded5cff9e"
+	expectedCountryCode          = "OK"
+	expectedLocaleCode           = "en_US"
+	expectedNegotiatedLocaleCode = "en-US"
+	expectedDeviceID             = "becc50f6-ff3d-407a-aa49-fa49531363be"
+	expectedLoID                 = "t2_deadbeef"
+	expectedOrigin               = "baseplate"
+	expectedSessionID            = "beefdead"
+	expectedRequestID            = "2adaff94-9067-4de0-a00b-79fded5cff9e"
 
 	emptyDeviceID = "00000000-0000-0000-0000-000000000000"
 )
@@ -226,16 +226,16 @@ func TestNew(t *testing.T) {
 		ctx,
 		globalTestImpl,
 		edgecontext.NewArgs{
-			LoID:              expectedLoID,
-			LoIDCreatedAt:     expectedCookieTime,
-			SessionID:         expectedSessionID,
-			AuthToken:         validToken,
-			DeviceID:          expectedDeviceID,
-			CountryCode:       expectedCountryCode,
-			OriginServiceName: expectedOrigin,
-			RequestID:         expectedRequestID,
-			LocaleCode:        expectedLocaleCode,
-			UnifiedLocaleCode: expectedUnifiedLocaleCode,
+			LoID:                 expectedLoID,
+			LoIDCreatedAt:        expectedCookieTime,
+			SessionID:            expectedSessionID,
+			AuthToken:            validToken,
+			DeviceID:             expectedDeviceID,
+			CountryCode:          expectedCountryCode,
+			OriginServiceName:    expectedOrigin,
+			RequestID:            expectedRequestID,
+			LocaleCode:           expectedLocaleCode,
+			NegotiatedLocaleCode: expectedNegotiatedLocaleCode,
 		},
 	)
 	if err != nil {
@@ -261,21 +261,6 @@ func TestLocale(t *testing.T) {
 			label:  "valid-language-valid-region",
 			locale: "es_MX",
 			valid:  true,
-		},
-		{
-			label:  "valid-language-invalid-region",
-			locale: "es_MEX",
-			valid:  false,
-		},
-		{
-			label:  "invalid-language-valid-region",
-			locale: "espn_MX",
-			valid:  false,
-		},
-		{
-			label:  "invalid-language-invalid-region",
-			locale: "espn_MEX",
-			valid:  false,
 		},
 		{
 			label:  "invalid-separator",
@@ -311,6 +296,72 @@ func edgeContextWithLocaleCode(l string) error {
 		globalTestImpl,
 		edgecontext.NewArgs{
 			LocaleCode: l,
+		},
+	)
+	return err
+}
+
+func TestNegotiatedLocale(t *testing.T) {
+	for _, c := range []struct {
+		label            string
+		negotiatedLocale string
+		valid            bool
+	}{
+		{
+			label:            "valid-language",
+			negotiatedLocale: "es",
+			valid:            true,
+		},
+		{
+			label:            "valid-language-valid-region",
+			negotiatedLocale: "es-MX",
+			valid:            true,
+		},
+		{
+			label:            "invalid-separator",
+			negotiatedLocale: "es_MX",
+			valid:            false,
+		},
+		{
+			label:            "invalid-capitalization",
+			negotiatedLocale: "ES-MX",
+			valid:            false,
+		},
+		{
+			label:            "valid-alphabet",
+			negotiatedLocale: "sr-Latn",
+			valid:            true,
+		},
+		{
+			label:            "valid-orthography",
+			negotiatedLocale: "de-DE-1996",
+			valid:            true,
+		},
+	} {
+		t.Run(c.label, func(t *testing.T) {
+			err := edgeContextWithNegotiatedLocaleCode(c.negotiatedLocale)
+
+			if c.valid {
+				if err != nil {
+					t.Errorf("Did not expect error, got %v", err)
+				}
+			} else {
+				if !errors.Is(err, edgecontext.ErrInvalidNegotiatedLocaleCode) {
+					t.Errorf("Expected edgecontext.ErrInvalidNegotiatedLocaleCode, got %v", err)
+				}
+			}
+		})
+	}
+}
+
+func edgeContextWithNegotiatedLocaleCode(l string) error {
+	ctx := context.Background()
+	_, err := edgecontext.New(
+		ctx,
+		globalTestImpl,
+		edgecontext.NewArgs{
+			LocaleCode:           "en",
+			NegotiatedLocaleCode: l,
 		},
 	)
 	return err

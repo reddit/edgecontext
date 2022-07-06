@@ -137,7 +137,7 @@ class EdgeContextTests(unittest.TestCase):
     ORIGIN_NAME = "baseplate"
     COUNTRY_CODE = "OK"
     LOCALE_CODE = "en_US"
-    UNIFIED_LOCALE_CODE = "en-US"
+    NEGOTIATED_LOCALE_CODE = "en-US"
 
     def setUp(self):
         self.store = FakeSecretsStore(
@@ -162,7 +162,7 @@ class EdgeContextTests(unittest.TestCase):
             origin_service_name=self.ORIGIN_NAME,
             country_code=self.COUNTRY_CODE,
             locale_code=self.LOCALE_CODE,
-            unified_locale_code=self.UNIFIED_LOCALE_CODE,
+            negotiated_locale_code=self.NEGOTIATED_LOCALE_CODE,
         )
         self.assertIsNot(request_context._t_request, None)
         self.assertEqual(request_context._header, SERIALIZED_EDGECONTEXT_WITH_VALID_AUTH)
@@ -198,7 +198,7 @@ class EdgeContextTests(unittest.TestCase):
                 loid_id=self.LOID_ID,
                 loid_created_ms=self.LOID_CREATED_MS,
                 session_id=self.SESSION_ID,
-                unified_locale_code="en_US",
+                negotiated_locale_code="en_US",
             )
 
     def test_create_empty_context(self):
@@ -275,7 +275,7 @@ class EdgeContextTests(unittest.TestCase):
         self.assertEqual(request_context.origin_service.name, self.ORIGIN_NAME)
         self.assertEqual(request_context.geolocation.country_code, self.COUNTRY_CODE)
         self.assertEqual(request_context.locale.locale_code, self.LOCALE_CODE)
-        self.assertEqual(request_context.locale.unified_locale_code, self.UNIFIED_LOCALE_CODE)
+        self.assertEqual(request_context.locale.negotiated_locale_code, self.NEGOTIATED_LOCALE_CODE)
         self.assertEqual(
             request_context.event_fields(),
             {

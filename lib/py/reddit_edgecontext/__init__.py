@@ -34,8 +34,8 @@ logger = logging.getLogger(__name__)
 
 
 COUNTRY_CODE_RE = re.compile(r"^[A-Z]{2}$")
-LOCALE_CODE_RE = re.compile(r"^[a-z]{2,3}(_[A-Z]{2})?$")
-UNIFIED_LOCALE_CODE_RE = re.compile(r"^[a-z]{2,3}(\-[A-Z]{2})?$")
+LOCALE_CODE_RE = re.compile(r"^[a-z]{2,}(_[a-zA-Z\d]{2,})*$")
+NEGOTIATED_LOCALE_CODE_RE = re.compile(r"^[a-z]{2,}(\-[a-zA-Z\d]{2,})*$")
 
 
 class NoAuthenticationError(Exception):
@@ -227,8 +227,8 @@ class Locale(NamedTuple):
     locale_code: str
     """IETF language tag representing the preferred locale for the client."""
 
-    unified_locale_code: str
-    """ Locale code forced to BCP-47 standard """
+    negotiated_locale_code: str
+    """One of supported locale codes forced to the BCP-47 format."""
 
 
 class User(NamedTuple):
@@ -486,7 +486,7 @@ class EdgeContext:
         """:py:class:`~reddit_edgecontext.Locale` object for the current context."""
         return Locale(
             locale_code=self._t_request.locale.locale_code,
-            unified_locale_code=self._t_request.locale.unified_locale_code,
+            negotiated_locale_code=self._t_request.locale.negotiated_locale_code,
         )
 
     @cached_property
@@ -543,7 +543,7 @@ class EdgeContextFactory(BaseEdgeContextFactory):
         country_code: Optional[str] = None,
         request_id: Optional[str] = None,
         locale_code: Optional[str] = None,
-        unified_locale_code: Optional[str] = None,
+        negotiated_locale_code: Optional[str] = None,
     ) -> EdgeContext:
         """Return a new EdgeContext object made from scratch.
 
@@ -588,7 +588,7 @@ class EdgeContextFactory(BaseEdgeContextFactory):
             the underlying request that this EdgeContext represents.
         :param locale_code: IETF language tag representing the preferred locale
             for the client.
-        :param unified_locale_code: locale code forced to BCP-47 standard
+        :param negotiated_locale_code: One of supported locale codes forced to the BCP-47 format
 
         """
         if loid_id is not None and not loid_id.startswith("t2_"):
@@ -611,11 +611,11 @@ class EdgeContextFactory(BaseEdgeContextFactory):
                 "e.g. en_US"
             )
 
-        if unified_locale_code is not None and not UNIFIED_LOCALE_CODE_RE.match(
-            unified_locale_code
+        if negotiated_locale_code is not None and not NEGOTIATED_LOCALE_CODE_RE.match(
+            negotiated_locale_code
         ):
             raise ValueError(
-                f"unified_locale_code <{unified_locale_code}> is not in a valid format, it should be in BCP-47."
+                f"negotiated_locale_code <{negotiated_locale_code}> is not in a valid format, it should be in BCP-47."
                 f"e.g. en-US"
             )
 
@@ -627,7 +627,7 @@ class EdgeContextFactory(BaseEdgeContextFactory):
             origin_service=TOriginService(name=origin_service_name),
             geolocation=TGeolocation(country_code=country_code),
             request_id=TRequestId(readable_id=request_id),
-            locale=TLocale(locale_code=locale_code, unified_locale_code=unified_locale_code),
+            locale=TLocale(locale_code=locale_code, negotiated_locale_code=negotiated_locale_code),
         )
         header = TSerialization.serialize(t_request, EdgeContext._HEADER_PROTOCOL_FACTORY)
 

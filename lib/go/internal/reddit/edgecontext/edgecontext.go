@@ -33,11 +33,12 @@ type LocaleCode string
 
 func LocaleCodePtr(v LocaleCode) *LocaleCode { return &v }
 
-//Locale code forced to the BCP-47 format (e.g. de-DE, pt-BR, etc.).
+//One of supported locale codes forced to the BCP-47 format
+//(e.g. de-DE, pt-BR, etc.)
 //
-type UnifiedLocaleCode string
+type NegotiatedLocaleCode string
 
-func UnifiedLocaleCodePtr(v UnifiedLocaleCode) *UnifiedLocaleCode { return &v }
+func NegotiatedLocaleCodePtr(v NegotiatedLocaleCode) *NegotiatedLocaleCode { return &v }
 
 //A two-character ISO 3166-1 country code representing the current
 //geographic location of the client.
@@ -754,11 +755,11 @@ func (p *RequestId) String() string {
 // Attributes:
 //  - LocaleCode: IETF language code representing the client locale preferences.
 // Can be either {lang} or {lang}_{region} format. e.g. en, en_US
-//  - UnifiedLocaleCode: Locale code forced to the BCP-47 format (hyphen separated e.g de-DE, pt-BR, etc.).
-// This field is introduced to be used for localization instead of locale_code.
+//  - NegotiatedLocaleCode: One of supported locale codes forced to the BCP-47 format
+// (e.g. de-DE, pt-BR, etc.)
 type Locale struct {
   LocaleCode LocaleCode `thrift:"locale_code,1" db:"locale_code" json:"locale_code"`
-  UnifiedLocaleCode UnifiedLocaleCode `thrift:"unified_locale_code,2" db:"unified_locale_code" json:"unified_locale_code"`
+  NegotiatedLocaleCode NegotiatedLocaleCode `thrift:"negotiated_locale_code,2" db:"negotiated_locale_code" json:"negotiated_locale_code"`
 }
 
 func NewLocale() *Locale {
@@ -770,8 +771,8 @@ func (p *Locale) GetLocaleCode() LocaleCode {
   return p.LocaleCode
 }
 
-func (p *Locale) GetUnifiedLocaleCode() UnifiedLocaleCode {
-  return p.UnifiedLocaleCode
+func (p *Locale) GetNegotiatedLocaleCode() NegotiatedLocaleCode {
+  return p.NegotiatedLocaleCode
 }
 func (p *Locale) Read(ctx context.Context, iprot thrift.TProtocol) error {
   if _, err := iprot.ReadStructBegin(ctx); err != nil {
@@ -835,8 +836,8 @@ func (p *Locale)  ReadField2(ctx context.Context, iprot thrift.TProtocol) error 
   if v, err := iprot.ReadString(ctx); err != nil {
   return thrift.PrependError("error reading field 2: ", err)
 } else {
-  temp := UnifiedLocaleCode(v)
-  p.UnifiedLocaleCode = temp
+  temp := NegotiatedLocaleCode(v)
+  p.NegotiatedLocaleCode = temp
 }
   return nil
 }
@@ -866,12 +867,12 @@ func (p *Locale) writeField1(ctx context.Context, oprot thrift.TProtocol) (err e
 }
 
 func (p *Locale) writeField2(ctx context.Context, oprot thrift.TProtocol) (err error) {
-  if err := oprot.WriteFieldBegin(ctx, "unified_locale_code", thrift.STRING, 2); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T write field begin error 2:unified_locale_code: ", p), err) }
-  if err := oprot.WriteString(ctx, string(p.UnifiedLocaleCode)); err != nil {
-  return thrift.PrependError(fmt.Sprintf("%T.unified_locale_code (2) field write error: ", p), err) }
+  if err := oprot.WriteFieldBegin(ctx, "negotiated_locale_code", thrift.STRING, 2); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 2:negotiated_locale_code: ", p), err) }
+  if err := oprot.WriteString(ctx, string(p.NegotiatedLocaleCode)); err != nil {
+  return thrift.PrependError(fmt.Sprintf("%T.negotiated_locale_code (2) field write error: ", p), err) }
   if err := oprot.WriteFieldEnd(ctx); err != nil {
-    return thrift.PrependError(fmt.Sprintf("%T write field end error 2:unified_locale_code: ", p), err) }
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 2:negotiated_locale_code: ", p), err) }
   return err
 }
 
@@ -882,7 +883,7 @@ func (p *Locale) Equals(other *Locale) bool {
     return false
   }
   if p.LocaleCode != other.LocaleCode { return false }
-  if p.UnifiedLocaleCode != other.UnifiedLocaleCode { return false }
+  if p.NegotiatedLocaleCode != other.NegotiatedLocaleCode { return false }
   return true
 }
 
