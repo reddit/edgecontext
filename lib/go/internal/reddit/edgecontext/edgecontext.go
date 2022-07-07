@@ -33,7 +33,7 @@ type LocaleCode string
 
 func LocaleCodePtr(v LocaleCode) *LocaleCode { return &v }
 
-//Locale code forced to the BCP-47 format
+//Locale code in the BCP-47 format
 //(e.g. de-DE, pt-BR, etc.)
 //
 type BCP47LocaleCode string
@@ -755,7 +755,7 @@ func (p *RequestId) String() string {
 // Attributes:
 //  - LocaleCode: IETF language code representing the client locale preferences.
 // Can be either {lang} or {lang}_{region} format. e.g. en, en_US
-//  - NegotiatedLocaleCode: One of supported locale codes forced to the BCP-47 format
+//  - NegotiatedLocaleCode: One of the supported locale codes in the BCP-47 format.
 // (e.g. de-DE, pt-BR, etc.)
 type Locale struct {
   LocaleCode LocaleCode `thrift:"locale_code,1" db:"locale_code" json:"locale_code"`

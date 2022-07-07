@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 COUNTRY_CODE_RE = re.compile(r"^[A-Z]{2}$")
 LOCALE_CODE_RE = re.compile(r"^[a-z]{2,}(_[a-zA-Z\d]{2,})*$")
-NEGOTIATED_LOCALE_CODE_RE = re.compile(r"^[a-z]{2,}(\-[a-zA-Z\d]{2,})*$")
+BCP47_LOCALE_CODE_RE = re.compile(r"^[a-z]{2,}(\-[a-zA-Z\d]{2,})*$")
 
 
 class NoAuthenticationError(Exception):
@@ -611,7 +611,7 @@ class EdgeContextFactory(BaseEdgeContextFactory):
                 "e.g. en_US"
             )
 
-        if negotiated_locale_code is not None and not NEGOTIATED_LOCALE_CODE_RE.match(
+        if negotiated_locale_code is not None and not BCP47_LOCALE_CODE_RE.match(
             negotiated_locale_code
         ):
             raise ValueError(

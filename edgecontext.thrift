@@ -16,7 +16,7 @@ e.g. en, en_US
 */
 typedef string LocaleCode
 
-/** Locale code forced to the BCP-47 format 
+/** Locale code in the BCP-47 format 
 (e.g. de-DE, pt-BR, etc.)
 
 */
@@ -133,7 +133,7 @@ struct Locale {
     Can be either {lang} or {lang}_{region} format. e.g. en, en_US
     */
     1: LocaleCode locale_code;
-    /** One of supported locale codes forced to the BCP-47 format
+    /** One of the supported locale codes in the BCP-47 format.
     (e.g. de-DE, pt-BR, etc.)
     */
     2: BCP47LocaleCode negotiated_locale_code;

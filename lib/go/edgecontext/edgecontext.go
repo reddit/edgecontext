@@ -43,9 +43,9 @@ const LoIDPrefix = "t2_"
 // e.g. en, en_US
 var LocaleRegex = regexp.MustCompile(`^[a-z]{2,}(_[a-zA-Z\d]{2,})*$`)
 
-// NegotiatedLocaleRegex validates locale codes format.
+// BCP47LocaleRegex validates locale codes format.
 // The same as LocaleRegex, but language and region specifier separated by a hyphen.
-var NegotiatedLocaleRegex = regexp.MustCompile(`^[a-z]{2,}(\-[a-zA-Z\d]{2,})*$`)
+var BCP47LocaleRegex = regexp.MustCompile(`^[a-z]{2,}(\-[a-zA-Z\d]{2,})*$`)
 
 var (
 	// ErrLoIDWrongPrefix is an error could be returned by New() when passed in LoID
@@ -217,7 +217,7 @@ func New(ctx context.Context, impl *Impl, args NewArgs) (*EdgeRequestContext, er
 			return nil, ErrInvalidLocaleCode
 		}
 		if args.NegotiatedLocaleCode != "" {
-			if !NegotiatedLocaleRegex.MatchString(args.NegotiatedLocaleCode) {
+			if !BCP47LocaleRegex.MatchString(args.NegotiatedLocaleCode) {
 				return nil, ErrInvalidNegotiatedLocaleCode
 			}
 			request.Locale = &ecthrift.Locale{

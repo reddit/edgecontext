@@ -554,7 +554,7 @@ class Locale(object):
     Attributes:
      - locale_code: IETF language code representing the client locale preferences.
     Can be either {lang} or {lang}_{region} format. e.g. en, en_US
-     - negotiated_locale_code: One of supported locale codes forced to the BCP-47 format
+     - negotiated_locale_code: One of the supported locale codes in the BCP-47 format.
     (e.g. de-DE, pt-BR, etc.)
 
     """
