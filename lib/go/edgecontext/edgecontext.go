@@ -222,7 +222,7 @@ func New(ctx context.Context, impl *Impl, args NewArgs) (*EdgeRequestContext, er
 			}
 			request.Locale = &ecthrift.Locale{
 				LocaleCode:           ecthrift.LocaleCode(args.LocaleCode),
-				NegotiatedLocaleCode: *ecthrift.NegotiatedLocaleCodePtr(ecthrift.NegotiatedLocaleCode(args.NegotiatedLocaleCode)),
+				NegotiatedLocaleCode: *ecthrift.BCP47LocaleCodePtr(ecthrift.BCP47LocaleCode(args.NegotiatedLocaleCode)),
 			}
 		} else {
 			request.Locale = &ecthrift.Locale{

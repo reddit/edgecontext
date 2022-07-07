@@ -33,12 +33,12 @@ type LocaleCode string
 
 func LocaleCodePtr(v LocaleCode) *LocaleCode { return &v }
 
-//One of supported locale codes forced to the BCP-47 format
+//Locale code forced to the BCP-47 format
 //(e.g. de-DE, pt-BR, etc.)
 //
-type NegotiatedLocaleCode string
+type BCP47LocaleCode string
 
-func NegotiatedLocaleCodePtr(v NegotiatedLocaleCode) *NegotiatedLocaleCode { return &v }
+func BCP47LocaleCodePtr(v BCP47LocaleCode) *BCP47LocaleCode { return &v }
 
 //A two-character ISO 3166-1 country code representing the current
 //geographic location of the client.
@@ -759,7 +759,7 @@ func (p *RequestId) String() string {
 // (e.g. de-DE, pt-BR, etc.)
 type Locale struct {
   LocaleCode LocaleCode `thrift:"locale_code,1" db:"locale_code" json:"locale_code"`
-  NegotiatedLocaleCode NegotiatedLocaleCode `thrift:"negotiated_locale_code,2" db:"negotiated_locale_code" json:"negotiated_locale_code"`
+  NegotiatedLocaleCode BCP47LocaleCode `thrift:"negotiated_locale_code,2" db:"negotiated_locale_code" json:"negotiated_locale_code"`
 }
 
 func NewLocale() *Locale {
@@ -771,7 +771,7 @@ func (p *Locale) GetLocaleCode() LocaleCode {
   return p.LocaleCode
 }
 
-func (p *Locale) GetNegotiatedLocaleCode() NegotiatedLocaleCode {
+func (p *Locale) GetNegotiatedLocaleCode() BCP47LocaleCode {
   return p.NegotiatedLocaleCode
 }
 func (p *Locale) Read(ctx context.Context, iprot thrift.TProtocol) error {
@@ -836,7 +836,7 @@ func (p *Locale)  ReadField2(ctx context.Context, iprot thrift.TProtocol) error 
   if v, err := iprot.ReadString(ctx); err != nil {
   return thrift.PrependError("error reading field 2: ", err)
 } else {
-  temp := NegotiatedLocaleCode(v)
+  temp := BCP47LocaleCode(v)
   p.NegotiatedLocaleCode = temp
 }
   return nil

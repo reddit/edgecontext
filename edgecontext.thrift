@@ -16,11 +16,11 @@ e.g. en, en_US
 */
 typedef string LocaleCode
 
-/** One of supported locale codes forced to the BCP-47 format 
+/** Locale code forced to the BCP-47 format 
 (e.g. de-DE, pt-BR, etc.)
 
 */
-typedef string NegotiatedLocaleCode
+typedef string BCP47LocaleCode
 
 /** A two-character ISO 3166-1 country code representing the current
 geographic location of the client.
@@ -136,7 +136,7 @@ struct Locale {
     /** One of supported locale codes forced to the BCP-47 format
     (e.g. de-DE, pt-BR, etc.)
     */
-    2: NegotiatedLocaleCode negotiated_locale_code;
+    2: BCP47LocaleCode negotiated_locale_code;
 }
 
 /** Container model for the Edge-Request context header.
