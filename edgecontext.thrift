@@ -10,8 +10,7 @@ typedef string AuthenticationToken
 /** IETF language tag representing the preferred locale for
 the client, used for providing localized content. Consists of
 an ISO 639-1 primary language subtag and an optional
-ISO 3166-1 alpha-2 region subtag separated by an underscore.
-e.g. en, en_US
+ISO 3166-1 alpha-2 region subtag.
 
 */
 typedef string LocaleCode
@@ -124,7 +123,8 @@ interface provided by baseplate.
 */
 struct Locale {
     /** IETF language code representing the client locale preferences.
-    Can be either {lang} or {lang}_{region} format. e.g. en, en_US
+    Preferably in BCP-47 format ({lang} or {lang}-{region}), 
+    but underscore separated locales also valid ({lang}_{region})
     */
     1: LocaleCode locale_code
 }
