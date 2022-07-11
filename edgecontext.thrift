@@ -122,9 +122,10 @@ interface provided by baseplate.
 
 */
 struct Locale {
-    /** IETF language code representing the client locale preferences.
-    Preferably in BCP-47 format ({lang} or {lang}-{region}), 
-    but underscore separated locales also valid ({lang}_{region})
+    /** IETF language tag representing the preferred locale for
+    the client, used for providing localized content. Consists of
+    an ISO 639-1 primary language subtag and an optional
+    ISO 3166-1 alpha-2 region subtag.
     */
     1: LocaleCode locale_code
 }
