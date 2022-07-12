@@ -261,29 +261,34 @@ func TestLocale(t *testing.T) {
 			valid:  true,
 		},
 		{
-			label:  "valid-language-invalid-region",
-			locale: "es_MEX",
-			valid:  false,
-		},
-		{
-			label:  "invalid-language-valid-region",
-			locale: "esp_MX",
-			valid:  false,
-		},
-		{
-			label:  "invalid-language-invalid-region",
-			locale: "esp_MEX",
-			valid:  false,
+			label:  "valid-language-valid-region-hyphen",
+			locale: "es-MX",
+			valid:  true,
 		},
 		{
 			label:  "invalid-separator",
-			locale: "es-MX",
+			locale: "esMX",
 			valid:  false,
 		},
 		{
 			label:  "invalid-capitalization",
 			locale: "ES_MX",
 			valid:  false,
+		},
+		{
+			label:  "valid-alphabet",
+			locale: "sr-Latn",
+			valid:  true,
+		},
+		{
+			label:  "valid-orthography",
+			locale: "de-DE-1996",
+			valid:  true,
+		},
+		{
+			label:  "valid-number",
+			locale: "es-419",
+			valid:  true,
 		},
 	} {
 		t.Run(c.label, func(t *testing.T) {
