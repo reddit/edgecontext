@@ -23,7 +23,7 @@ setup(
         "baseplate>=1.5,<3.0",
         "pyjwt>=2.0.0,<3.0",
         "thrift-unofficial>=0.14,<1.0",
-        "cryptography>=3.0,<4.0",
+        "cryptography>=3.0",
     ],
     package_data={"reddit_edgecontext": ["py.typed"]},
     zip_safe=True,

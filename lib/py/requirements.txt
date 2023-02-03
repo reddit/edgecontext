@@ -2,8 +2,8 @@
 alabaster==0.7.12
 baseplate==2.0.0a2
 black==20.8b1
-cryptography==3.3.1
-flake8==3.8.4
+cryptography==39.0.0
+flake8==5.0.4
 mypy==0.910
 pydocstyle==5.1.1
 pyjwt==2.0.1
