@@ -40,7 +40,7 @@ sphinxcontrib-htmlhelp==1.0.3
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.3
 sphinxcontrib-serializinghtml==1.1.4
-thrift-unofficial==0.14.1rc0
+thrift==0.14.1
 toml==0.10.2
 typing-extensions==3.10.0.2
 urllib3==1.26.3
