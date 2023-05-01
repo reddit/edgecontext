@@ -1,13 +1,13 @@
 package edgecontext
 
 import (
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/reddit/baseplate.go/timebp"
 )
 
 // AuthenticationToken defines the json format of the authentication token.
 type AuthenticationToken struct {
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 
 	// NOTE: Subject field is in StandardClaims.
 
@@ -25,5 +25,5 @@ type AuthenticationToken struct {
 
 // Subject returns the subject field of the token.
 func (t AuthenticationToken) Subject() string {
-	return t.StandardClaims.Subject
+	return t.RegisteredClaims.Subject
 }

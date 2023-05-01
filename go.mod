@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/apache/thrift v0.16.0
 	github.com/gofrs/uuid v3.2.0+incompatible
-	github.com/golang-jwt/jwt/v4 v4.3.0
+	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/reddit/baseplate.go v0.9.6
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
 )

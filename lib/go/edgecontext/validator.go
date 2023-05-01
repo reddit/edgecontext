@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/reddit/baseplate.go/log"
 	"github.com/reddit/baseplate.go/secrets"
 	"golang.org/x/crypto/ssh"
@@ -38,13 +38,25 @@ const (
 // as defined in RFC 7517 section 4.5.
 const JWTHeaderKeyID = "kid"
 
-// ErrNoPublicKeysLoaded is an error returned by ValidateToken indicates that
-// the function is called before any public keys are loaded from secrets.
-var ErrNoPublicKeysLoaded = errors.New("edgecontext.ValidateToken: no public keys loaded")
+var (
+	// ErrEmptyToken is an error returned by ValidateToken indicates that the JWT
+	// token is empty string.
+	ErrEmptyToken = errors.New("edgecontext.ValidateToken: empty JWT token")
 
-// ErrEmptyToken is an error returned by ValidateToken indicates that the JWT
-// token is empty string.
-var ErrEmptyToken = errors.New("edgecontext.ValidateToken: empty JWT token")
+	// ErrInvalidToken is an error returned by ValidateToken indicates that
+	// the token returned by parsing the JWT was invalid, although an error was
+	// not returned by parsing.
+	ErrInvalidToken = errors.New("edgecontext.ValidateToken: invalid token")
+
+	// ErrInvalidTokenType is an error returned by ValidateToken indicates that
+	// the claims on the token return by parsing the JWT is not a
+	// *AuthenticationToken.
+	ErrInvalidTokenType = errors.New("edgecontext.ValidateToken: invalid token type")
+
+	// ErrNoPublicKeysLoaded is an error returned by ValidateToken indicates that
+	// the function is called before any public keys are loaded from secrets.
+	ErrNoPublicKeysLoaded = errors.New("edgecontext.ValidateToken: no public keys loaded")
+)
 
 // ValidateToken parses and validates a jwt token, and return the decoded
 // AuthenticationToken.
@@ -73,24 +85,21 @@ func (impl *Impl) ValidateToken(token string) (*AuthenticationToken, error) {
 			kid, _ := jt.Header[JWTHeaderKeyID].(string)
 			return keys.getKey(kid), nil
 		},
+		jwt.WithValidMethods([]string{jwtAlg}),
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	if !tok.Valid {
-		return nil, jwt.NewValidationError("invalid token", 0)
-	}
-
-	if tok.Method.Alg() != jwtAlg {
-		return nil, jwt.NewValidationError("wrong signing method", 0)
+		return nil, ErrInvalidToken
 	}
 
 	if claims, ok := tok.Claims.(*AuthenticationToken); ok {
 		return claims, nil
 	}
 
-	return nil, jwt.NewValidationError("invalid token type", 0)
+	return nil, fmt.Errorf("%w: %T", ErrInvalidTokenType, tok.Claims)
 }
 
 func (impl *Impl) validatorMiddleware(next secrets.SecretHandlerFunc) secrets.SecretHandlerFunc {
