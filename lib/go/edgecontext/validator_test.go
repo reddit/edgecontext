@@ -1,6 +1,7 @@
 package edgecontext_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -20,6 +21,35 @@ func TestValidToken(t *testing.T) {
 	actual := token.Subject()
 	if actual != expected {
 		t.Errorf("subject expected %q, got %q", expected, actual)
+	}
+}
+
+func TestInvalidToken(t *testing.T) {
+	cases := []struct {
+		name  string
+		token string
+		want  error
+	}{
+		{
+			name:  "wrong algorithm",
+			token: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0Ml9leGFtcGxlIiwiZXhwIjoyNTI0NjA4MDAwfQ.dRzzfc9GmzyqfAbl6n_C55JJueraXk9pp3v0UYXw0ic6W_9RVa7aA1zJWm7slX9lbuYldwUtHvqaSsOpjF34uqr0-yMoRDVpIrbkwwJkNuAE8kbXGYFmXf3Ip25wMHtSXn64y2gJN8TtgAAnzjjGs9yzK9BhHILCDZTtmPbsUepxKmWTiEX2BdurUMZzinbcvcKY4Rb_Fl0pwsmBJFs7nmk5PvTyC6qivCd8ZmMc7dwL47mwy_7ouqdqKyUEdLoTEQ_psuy9REw57PRe00XCHaTSTRDCLmy4gAN6J0J056XoRHLfFcNbtzAmqmtJ_D9HGIIXPKq-KaggwK9I4qLX7g`,
+			want:  jwt.ErrTokenSignatureInvalid,
+		},
+		{
+			name:  "invalid signature",
+			token: `eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0Ml9leGFtcGxlIiwiZXhwIjoyNTI0NjA4MDAwfQ.foobar`,
+			want:  jwt.ErrTokenSignatureInvalid,
+		},
+	}
+
+	for _, _c := range cases {
+		c := _c
+		t.Run(c.name, func(t *testing.T) {
+			if _, err := globalTestImpl.ValidateToken(c.token); !errors.Is(err, c.want) {
+				t.Errorf("error mismatch: want %v, got %v", c.want, err)
+
+			}
+		})
 	}
 }
 
