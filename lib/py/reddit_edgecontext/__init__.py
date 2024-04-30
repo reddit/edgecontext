@@ -17,6 +17,9 @@ from baseplate.lib import cached_property
 from baseplate.lib.edgecontext import EdgeContextFactory as BaseEdgeContextFactory
 from baseplate.lib.secrets import SecretsStore
 from jwt.algorithms import get_default_algorithms
+from thrift import TSerialization
+from thrift.protocol.TBinaryProtocol import TBinaryProtocolAcceleratedFactory
+
 from reddit_edgecontext.thrift.ttypes import Device as TDevice
 from reddit_edgecontext.thrift.ttypes import Geolocation as TGeolocation
 from reddit_edgecontext.thrift.ttypes import Locale as TLocale
@@ -25,8 +28,6 @@ from reddit_edgecontext.thrift.ttypes import OriginService as TOriginService
 from reddit_edgecontext.thrift.ttypes import Request as TRequest
 from reddit_edgecontext.thrift.ttypes import RequestId as TRequestId
 from reddit_edgecontext.thrift.ttypes import Session as TSession
-from thrift import TSerialization
-from thrift.protocol.TBinaryProtocol import TBinaryProtocolAcceleratedFactory
 
 
 logger = logging.getLogger(__name__)

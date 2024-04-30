@@ -2,6 +2,7 @@ import struct
 import unittest
 
 from baseplate.testing.lib.secrets import FakeSecretsStore
+
 from reddit_edgecontext import EdgeContextFactory
 from reddit_edgecontext import InvalidAuthenticationToken
 from reddit_edgecontext import NoAuthenticationError
@@ -204,7 +205,9 @@ class EdgeContextTests(unittest.TestCase):
         self.assertEqual(
             request_context._header,
             # loid
-            b"\x0c\x00" b"\x01" b"\x00"  # STRUCT  # tag number  # END STRUCT
+            b"\x0c\x00"
+            b"\x01"
+            b"\x00"  # STRUCT  # tag number  # END STRUCT
             # session
             b"\x0c\x00\x02\x00"
             # device
