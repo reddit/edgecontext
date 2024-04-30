@@ -6,6 +6,7 @@ require (
 	github.com/apache/thrift v0.16.0
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/golang-jwt/jwt/v5 v5.0.0
+	github.com/google/go-cmp v0.5.6
 	github.com/reddit/baseplate.go v0.9.6
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
 )

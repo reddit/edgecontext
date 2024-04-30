@@ -88,7 +88,7 @@ func (u User) HasRole(role string) bool {
 	// Since in most cases the roles slice would be quite small,
 	// it's better to iterate them than converting the slice into a set.
 	for _, r := range token.Roles {
-		if strings.ToLower(role) == strings.ToLower(r) {
+		if strings.EqualFold(role, r) {
 			return true
 		}
 	}

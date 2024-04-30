@@ -21,6 +21,13 @@ type AuthenticationToken struct {
 		ID        string                      `json:"id,omitempty"`
 		CreatedAt timebp.TimestampMillisecond `json:"created_ms,omitempty"`
 	} `json:"loid,omitempty"`
+
+	OnBehalfOf *struct {
+		AccountID string   `json:"aid,omitempty"`
+		Roles     []string `json:"roles,omitempty"`
+	} `json:"obo,omitempty"`
+
+	ServiceRequestedElevatedAccess bool `json:"sea,omitempty"`
 }
 
 // Subject returns the subject field of the token.
