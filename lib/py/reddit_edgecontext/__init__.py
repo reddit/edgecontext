@@ -122,7 +122,7 @@ class AuthenticationToken:
         raise NotImplementedError
 
     @property
-    def on_behalf_of_roles(self) -> Set[str]:
+    def on_behalf_of_roles(self) -> Optional[Set[str]]:
         raise NotImplementedError
 
     @property
@@ -167,7 +167,7 @@ class ValidatedAuthenticationToken(AuthenticationToken):
         return (self.payload.get("obo") or {}).get("aid")
 
     @property
-    def on_behalf_of_roles(self) -> Set[str]:
+    def on_behalf_of_roles(self) -> Optional[Set[str]]:
         return (self.payload.get("obo") or {}).get("roles")
 
     @property
@@ -209,7 +209,7 @@ class InvalidAuthenticationToken(AuthenticationToken):
         raise NoAuthenticationError
 
     @property
-    def on_behalf_of_roles(self) -> Set[str]:
+    def on_behalf_of_roles(self) -> Optional[Set[str]]:
         raise NoAuthenticationError
 
     @property
@@ -447,7 +447,7 @@ class Service(NamedTuple):
         return self.authentication_token.on_behalf_of_id
 
     @property
-    def on_behalf_of_roles(self) -> Set[str]:
+    def on_behalf_of_roles(self) -> Optional[Set[str]]:
         if not self.is_service():
             raise NoAuthenticationError
         return self.authentication_token.on_behalf_of_roles

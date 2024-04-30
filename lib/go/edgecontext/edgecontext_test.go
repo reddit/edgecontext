@@ -849,7 +849,7 @@ func TestFromHeader(t *testing.T) {
 					t.Error("Failed to get on behalf of roles")
 				} else {
 					if diff := cmp.Diff([]string{"admin"}, roles); diff != "" {
-						t.Errorf("mismatch (-want +got)", diff)
+						t.Errorf("mismatch (-want +got)\n%s\n", diff)
 					}
 				}
 

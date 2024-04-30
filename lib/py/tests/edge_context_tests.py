@@ -208,9 +208,9 @@ class EdgeContextTests(unittest.TestCase):
         self.assertEqual(
             request_context._header,
             # loid
-            b"\x0c\x00"
-            b"\x01"
-            b"\x00"  # STRUCT  # tag number  # END STRUCT
+            b"\x0c\x00"  # STRUCT
+            b"\x01"  # tag number
+            b"\x00"  # END STRUCT
             # session
             b"\x0c\x00\x02\x00"
             # device
