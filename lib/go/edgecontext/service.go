@@ -27,6 +27,10 @@ func (s Service) Name() (name string, ok bool) {
 	return
 }
 
+// OnBehalfOfID returns the ID of the user on whose behalf the service is acting.
+//
+// If it's not coming from an authenticated service,
+// ("", false) will be returned.
 func (s Service) OnBehalfOfID() (id string, ok bool) {
 	if s.isService() {
 		token := AuthenticationToken(s)
@@ -41,6 +45,10 @@ func (s Service) OnBehalfOfID() (id string, ok bool) {
 	return
 }
 
+// OnBehalfOfRoles returns the roles of the user on whose behalf the service is acting.
+//
+// If it's not coming from an authenticated service,
+// (nil, false) will be returned.
 func (s Service) OnBehalfOfRoles() (roles []string, ok bool) {
 	if s.isService() {
 		token := AuthenticationToken(s)
@@ -52,6 +60,7 @@ func (s Service) OnBehalfOfRoles() (roles []string, ok bool) {
 	return
 }
 
+// IsElevatedAccess returns whether the service requested elevated access.
 func (s Service) IsElevatedAccess() bool {
 	if s.isService() {
 		return AuthenticationToken(s).ServiceRequestedElevatedAccess

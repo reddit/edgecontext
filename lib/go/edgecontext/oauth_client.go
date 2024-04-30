@@ -23,11 +23,11 @@ func (o OAuthClient) ID() string {
 //
 // For example, use:
 //
-//     if client.IsType("third_party")
+//	if client.IsType("third_party")
 //
 // Instead of:
 //
-//     if !client.IsType("first_party")
+//	if !client.IsType("first_party")
 func (o OAuthClient) IsType(types ...string) bool {
 	clientType := AuthenticationToken(o).OAuthClientType
 	for _, t := range types {
