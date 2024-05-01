@@ -60,8 +60,8 @@ func (s Service) OnBehalfOfRoles() (roles []string, ok bool) {
 	return nil, false
 }
 
-// IsElevatedAccess returns whether the service requested elevated access.
-func (s Service) IsElevatedAccess() bool {
+// RequestsElevatedAccess returns whether the service requested elevated access.
+func (s Service) RequestsElevatedAccess() bool {
 	if s.isService() {
 		return AuthenticationToken(s).ServiceRequestedElevatedAccess
 	}

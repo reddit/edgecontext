@@ -796,14 +796,14 @@ func TestFromHeader(t *testing.T) {
 
 				svc, ok := e.Service()
 				if !ok {
-					t.Errorf("Expected service to be true, got false")
+					t.Fatal("Expected service to be true, got false")
 				}
-				if name, ok := svc.Name(); !ok {
-					t.Error("Failed to get service name")
-				} else {
-					if name != expectedServiceName {
-						t.Errorf("Expected service name %q, got %q", expectedServiceName, name)
-					}
+				name, ok := svc.Name()
+				if !ok {
+					t.Fatal("Failed to get service name")
+				}
+				if name != expectedServiceName {
+					t.Errorf("Expected service name %q, got %q", expectedServiceName, name)
 				}
 
 				if id, ok := svc.OnBehalfOfID(); ok {
@@ -814,7 +814,7 @@ func TestFromHeader(t *testing.T) {
 					t.Errorf("expected no roles, got %q", roles)
 				}
 
-				if svc.IsElevatedAccess() {
+				if svc.RequestsElevatedAccess() {
 					t.Errorf("expected no elevated access, got true")
 				}
 			})
@@ -827,33 +827,33 @@ func TestFromHeader(t *testing.T) {
 
 				svc, ok := e.Service()
 				if !ok {
-					t.Errorf("Expected service to be true, got false")
+					t.Fatal("Expected service to be true, got false")
 				}
-				if name, ok := svc.Name(); !ok {
-					t.Error("Failed to get service name")
-				} else {
-					if name != expectedServiceName {
-						t.Errorf("Expected service name %q, got %q", expectedServiceName, name)
-					}
+				name, ok := svc.Name()
+				if !ok {
+					t.Fatal("Failed to get service name")
 				}
-
-				if id, ok := svc.OnBehalfOfID(); !ok {
-					t.Error("Failed to get on behalf of id")
-				} else {
-					if id != expectedLoID {
-						t.Errorf("Expected on behalf of id %q, got %q", expectedLoID, id)
-					}
+				if name != expectedServiceName {
+					t.Errorf("Expected service name %q, got %q", expectedServiceName, name)
 				}
 
-				if roles, ok := svc.OnBehalfOfRoles(); !ok {
-					t.Error("Failed to get on behalf of roles")
-				} else {
-					if diff := cmp.Diff([]string{"admin"}, roles); diff != "" {
-						t.Errorf("mismatch (-want +got)\n%s\n", diff)
-					}
+				id, ok := svc.OnBehalfOfID()
+				if !ok {
+					t.Fatal("Failed to get on behalf of id")
+				}
+				if id != expectedLoID {
+					t.Errorf("Expected on behalf of id %q, got %q", expectedLoID, id)
 				}
 
-				if !svc.IsElevatedAccess() {
+				roles, ok := svc.OnBehalfOfRoles()
+				if !ok {
+					t.Fatal("Failed to get on behalf of roles")
+				}
+				if diff := cmp.Diff([]string{"admin"}, roles); diff != "" {
+					t.Errorf("mismatch (-want +got)\n%s\n", diff)
+				}
+
+				if !svc.RequestsElevatedAccess() {
 					t.Errorf("expected elevated access, got false")
 				}
 			})
