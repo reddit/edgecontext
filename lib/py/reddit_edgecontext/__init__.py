@@ -422,7 +422,9 @@ class Service(NamedTuple):
 
     def is_service(self) -> bool:
         subject = self.authentication_token.subject
-        return subject and subject.startswith("service/")
+        if subject is None or subject == "":
+            return False
+        return subject.startswith("service/")
 
     @property
     def name(self) -> str:
@@ -434,9 +436,9 @@ class Service(NamedTuple):
             service.
 
         """
-        if not self.is_service():
-            raise NoAuthenticationError
         subject = self.authentication_token.subject
+        if subject is None or subject == "":
+            raise NoAuthenticationError
         name = subject[len("service/") :]
         return name
 
