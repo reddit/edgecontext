@@ -143,7 +143,7 @@ class AuthenticationTokenTests(unittest.TestCase):
         self.assertEqual(token.subject, "service/test-service")
         self.assertEqual(token.on_behalf_of_roles, ["admin"])
         self.assertEqual(token.on_behalf_of_id, "t2_deadbeef")
-        self.assertEqual(token.is_elevated_access, True)
+        self.assertEqual(token.requests_elevated_access, True)
 
 
 class EdgeContextTests(unittest.TestCase):
@@ -205,7 +205,9 @@ class EdgeContextTests(unittest.TestCase):
         self.assertEqual(
             request_context._header,
             # loid
-            b"\x0c\x00" b"\x01" b"\x00"  # STRUCT  # tag number  # END STRUCT
+            b"\x0c\x00"
+            b"\x01"
+            b"\x00"  # STRUCT  # tag number  # END STRUCT
             # session
             b"\x0c\x00\x02\x00"
             # device
@@ -348,7 +350,7 @@ class EdgeContextTests(unittest.TestCase):
         self.assertEqual(request_context.service.name, "test-service")
         self.assertEqual(request_context.service.on_behalf_of_id, None)
         self.assertEqual(request_context.service.on_behalf_of_roles, None)
-        self.assertEqual(request_context.service.is_elevated_access, None)
+        self.assertEqual(request_context.service.requests_elevated_access, None)
 
     def test_service_auth_with_additional_options(self):
         request_context = self.factory.from_upstream(
@@ -358,4 +360,4 @@ class EdgeContextTests(unittest.TestCase):
         self.assertEqual(request_context.service.name, "test-service")
         self.assertEqual(request_context.service.on_behalf_of_id, "t2_deadbeef")
         self.assertEqual(request_context.service.on_behalf_of_roles, ["admin"])
-        self.assertEqual(request_context.service.is_elevated_access, True)
+        self.assertEqual(request_context.service.requests_elevated_access, True)

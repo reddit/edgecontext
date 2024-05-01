@@ -126,7 +126,7 @@ class AuthenticationToken:
         raise NotImplementedError
 
     @property
-    def is_elevated_access(self) -> Optional[bool]:
+    def requests_elevated_access(self) -> Optional[bool]:
         raise NotImplementedError
 
 
@@ -171,7 +171,7 @@ class ValidatedAuthenticationToken(AuthenticationToken):
         return (self.payload.get("obo") or {}).get("roles")
 
     @property
-    def is_elevated_access(self) -> Optional[bool]:
+    def requests_elevated_access(self) -> Optional[bool]:
         return self.payload.get("sea")
 
 
@@ -213,7 +213,7 @@ class InvalidAuthenticationToken(AuthenticationToken):
         raise NoAuthenticationError
 
     @property
-    def is_elevated_access(self) -> Optional[bool]:
+    def requests_elevated_access(self) -> Optional[bool]:
         raise NoAuthenticationError
 
 
@@ -455,10 +455,10 @@ class Service(NamedTuple):
         return self.authentication_token.on_behalf_of_roles
 
     @property
-    def is_elevated_access(self) -> Optional[bool]:
+    def requests_elevated_access(self) -> Optional[bool]:
         if not self.is_service():
             raise NoAuthenticationError
-        return self.authentication_token.is_elevated_access
+        return self.authentication_token.requests_elevated_access
 
 
 class EdgeContext:
