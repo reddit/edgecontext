@@ -24,7 +24,7 @@ func (s Service) Name() (name string, ok bool) {
 		subject := AuthenticationToken(s).Subject()
 		return subject[len(servicePrefix):], true
 	}
-	return
+	return "", false
 }
 
 // OnBehalfOfID returns the ID of the user on whose behalf the service is acting.
@@ -35,14 +35,14 @@ func (s Service) OnBehalfOfID() (id string, ok bool) {
 	if s.isService() {
 		token := AuthenticationToken(s)
 		if token.OnBehalfOf == nil {
-			return
+			return "", false
 		}
 		if strings.HasPrefix(token.OnBehalfOf.AccountID, userPrefix) {
 			return token.OnBehalfOf.AccountID, true
 		}
-		return
+		return "", false
 	}
-	return
+	return "", false
 }
 
 // OnBehalfOfRoles returns the roles of the user on whose behalf the service is acting.
@@ -53,11 +53,11 @@ func (s Service) OnBehalfOfRoles() (roles []string, ok bool) {
 	if s.isService() {
 		token := AuthenticationToken(s)
 		if token.OnBehalfOf == nil {
-			return
+			return nil, false
 		}
 		return token.OnBehalfOf.Roles, true
 	}
-	return
+	return nil, false
 }
 
 // IsElevatedAccess returns whether the service requested elevated access.
