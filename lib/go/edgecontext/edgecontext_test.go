@@ -8,6 +8,7 @@ import (
 
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/gofrs/uuid"
+	"github.com/google/go-cmp/cmp"
 	"github.com/reddit/baseplate.go/detach"
 	"github.com/reddit/baseplate.go/experiments"
 	"github.com/reddit/baseplate.go/timebp"
@@ -32,6 +33,9 @@ const (
 		"\x00" +
 		// end of struct
 		"\x00")
+
+	headerWithValidServiceAuth           = "\x0c\x00\x01\x00\x0c\x00\x02\x00\x0b\x00\x03\x00\x00\x02\x0aeyJhbGciOiJSUzI1NiIsImtpZCI6IlNIQTI1NjpsWjBoa1dSc0RwYXBlQnUyZWtYOVdZMm9ZSW5Id2RSYVhUd3RCZWNEaWNJIiwidHlwIjoiSldUIn0.eyJzdWIiOiJzZXJ2aWNlL3Rlc3Qtc2VydmljZSIsImV4cCI6MjUyNDYwODAwMH0.P41Iahxu-Bbg5srTFSQTBkzwiff4ytlhVBUYuyYTFGY_7XCyKdZywUmVHRY_Q2w8Q2uaybnmuoM95JhRpdNYcTPIYWEby4Z5DSV-zMqqmHnP22aH_sAckFQl86Yw_2pdZpKKJ-KQkyT0vEkxe-vNs5HhEdBr6Rae0g2SKEr7RaPMoToq6xpucDAREVWa7yJMtyyNtiVixeLoxTegRLOZTFEVt4TTYKDuT2FdEY5P2b8BOSpFMoiv9w51gZO1qvn9Zjrl00Z-lI_onihMIkrG_viWVAlzEl8d5ZWuJVjHJvm7O0CS4OuhZocE2qbYQrw9THSS1Mh4YR-_r2v1ArYnVA\x0c\x00\x04\x00\x0c\x00\x05\x0b\x00\x01\x00\x00\x00\x0eorigin/service\x00\x0c\x00\x06\x00\x0c\x00\x07\x0b\x00\x01\x00\x00\x00$1566dce9-9567-4952-b23b-9fd72e111162\x00\x00"
+	headerWithValidServiceAuthAndOptions = "\x0c\x00\x01\x00\x0c\x00\x02\x00\x0b\x00\x03\x00\x00\x02VeyJhbGciOiJSUzI1NiIsImtpZCI6IlNIQTI1NjpsWjBoa1dSc0RwYXBlQnUyZWtYOVdZMm9ZSW5Id2RSYVhUd3RCZWNEaWNJIiwidHlwIjoiSldUIn0.eyJzdWIiOiJzZXJ2aWNlL3Rlc3Qtc2VydmljZSIsImV4cCI6MjUyNDYwODAwMCwib2JvIjp7ImFpZCI6InQyX2RlYWRiZWVmIiwicm9sZXMiOlsiYWRtaW4iXX0sInNlYSI6dHJ1ZX0.PVefAKWUFfk_7QKen6Iz0Cfu95Yp92lYETlrxCUacLsa9u-qz36aet21iwFrdnJiz7gDeJRH7sOJyh6jRmkD0ptWs4Zl7VqpZY-ALgDOdhwSHoUIoV2L7twT-Dm3Tdyfbzq01fOni9ioq5akKnETC5IbLSOqp1ssWJcgo_9g-X-SdRiuf5u8YHD2Mrep5U21bkbYnm4rK9tX_oCnhrrp4rbXi5yogx594oNmOWUedIeyv6QY_xVGbaXOz7deBIWQY2fSYG3cpiBNtSYEJ4yDTbjGY0G1Vp78bX8YZlboc13TGoDpARdfHuHeQU0wAQEhi7pu0Q4FufEVua4q1f0P3A\x0c\x00\x04\x00\x0c\x00\x05\x0b\x00\x01\x00\x00\x00\x0eorigin/service\x00\x0c\x00\x06\x00\x0c\x00\x07\x0b\x00\x01\x00\x00\x00$a3b2d5c2-ab27-4948-9dae-78a3ffb46957\x00\x00"
 )
 
 const (
@@ -42,6 +46,7 @@ const (
 	expectedOrigin      = "baseplate"
 	expectedSessionID   = "beefdead"
 	expectedRequestID   = "2adaff94-9067-4de0-a00b-79fded5cff9e"
+	expectedServiceName = "test-service"
 
 	emptyDeviceID = "00000000-0000-0000-0000-000000000000"
 )
@@ -431,6 +436,16 @@ func TestFromHeader(t *testing.T) {
 					)
 				},
 			)
+
+			t.Run(
+				"service",
+				func(t *testing.T) {
+					_, ok := e.Service()
+					if ok {
+						t.Errorf("Expected service to be false, got true")
+					}
+				},
+			)
 		},
 	)
 
@@ -767,6 +782,81 @@ func TestFromHeader(t *testing.T) {
 					e.RequestID(),
 				)
 			}
+		},
+	)
+
+	t.Run(
+		"service",
+		func(t *testing.T) {
+			t.Run("service auth only", func(t *testing.T) {
+				e, err := edgecontext.FromHeader(context.Background(), headerWithValidServiceAuth, globalTestImpl)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				svc, ok := e.Service()
+				if !ok {
+					t.Fatal("Expected service to be true, got false")
+				}
+				name, ok := svc.Name()
+				if !ok {
+					t.Fatal("Failed to get service name")
+				}
+				if name != expectedServiceName {
+					t.Errorf("Expected service name %q, got %q", expectedServiceName, name)
+				}
+
+				if id, ok := svc.OnBehalfOfID(); ok {
+					t.Errorf("expected no id, got %q", id)
+				}
+
+				if roles, ok := svc.OnBehalfOfRoles(); ok {
+					t.Errorf("expected no roles, got %q", roles)
+				}
+
+				if svc.RequestsElevatedAccess() {
+					t.Errorf("expected no elevated access, got true")
+				}
+			})
+
+			t.Run("with additional options", func(t *testing.T) {
+				e, err := edgecontext.FromHeader(context.Background(), headerWithValidServiceAuthAndOptions, globalTestImpl)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				svc, ok := e.Service()
+				if !ok {
+					t.Fatal("Expected service to be true, got false")
+				}
+				name, ok := svc.Name()
+				if !ok {
+					t.Fatal("Failed to get service name")
+				}
+				if name != expectedServiceName {
+					t.Errorf("Expected service name %q, got %q", expectedServiceName, name)
+				}
+
+				id, ok := svc.OnBehalfOfID()
+				if !ok {
+					t.Fatal("Failed to get on behalf of id")
+				}
+				if id != expectedLoID {
+					t.Errorf("Expected on behalf of id %q, got %q", expectedLoID, id)
+				}
+
+				roles, ok := svc.OnBehalfOfRoles()
+				if !ok {
+					t.Fatal("Failed to get on behalf of roles")
+				}
+				if diff := cmp.Diff([]string{"admin"}, roles); diff != "" {
+					t.Errorf("mismatch (-want +got)\n%s\n", diff)
+				}
+
+				if !svc.RequestsElevatedAccess() {
+					t.Errorf("expected elevated access, got false")
+				}
+			})
 		},
 	)
 }

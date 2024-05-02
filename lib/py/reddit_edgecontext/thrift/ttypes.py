@@ -37,16 +37,9 @@ class Loid(object):
 
     """
 
-    __slots__ = (
-        "id",
-        "created_ms",
-    )
+    __slots__ = ("id", "created_ms")
 
-    def __init__(
-        self,
-        id=None,
-        created_ms=None,
-    ):
+    def __init__(self, id=None, created_ms=None):
         self.id = id
         self.created_ms = created_ms
 
@@ -137,10 +130,7 @@ class Session(object):
 
     __slots__ = ("id",)
 
-    def __init__(
-        self,
-        id=None,
-    ):
+    def __init__(self, id=None):
         self.id = id
 
     def read(self, iprot):
@@ -221,10 +211,7 @@ class Device(object):
 
     __slots__ = ("id",)
 
-    def __init__(
-        self,
-        id=None,
-    ):
+    def __init__(self, id=None):
         self.id = id
 
     def read(self, iprot):
@@ -306,10 +293,7 @@ class OriginService(object):
 
     __slots__ = ("name",)
 
-    def __init__(
-        self,
-        name=None,
-    ):
+    def __init__(self, name=None):
         self.name = name
 
     def read(self, iprot):
@@ -389,10 +373,7 @@ class Geolocation(object):
 
     __slots__ = ("country_code",)
 
-    def __init__(
-        self,
-        country_code=None,
-    ):
+    def __init__(self, country_code=None):
         self.country_code = country_code
 
     def read(self, iprot):
@@ -473,10 +454,7 @@ class RequestId(object):
 
     __slots__ = ("readable_id",)
 
-    def __init__(
-        self,
-        readable_id=None,
-    ):
+    def __init__(self, readable_id=None):
         self.readable_id = readable_id
 
     def read(self, iprot):
@@ -560,10 +538,7 @@ class Locale(object):
 
     __slots__ = ("locale_code",)
 
-    def __init__(
-        self,
-        locale_code=None,
-    ):
+    def __init__(self, locale_code=None):
         self.locale_code = locale_code
 
     def read(self, iprot):
@@ -818,146 +793,32 @@ class Request(object):
 all_structs.append(Loid)
 Loid.thrift_spec = (
     None,  # 0
-    (
-        1,
-        TType.STRING,
-        "id",
-        "UTF8",
-        None,
-    ),  # 1
-    (
-        2,
-        TType.I64,
-        "created_ms",
-        None,
-        None,
-    ),  # 2
+    (1, TType.STRING, "id", "UTF8", None),  # 1
+    (2, TType.I64, "created_ms", None, None),  # 2
 )
 all_structs.append(Session)
-Session.thrift_spec = (
-    None,  # 0
-    (
-        1,
-        TType.STRING,
-        "id",
-        "UTF8",
-        None,
-    ),  # 1
-)
+Session.thrift_spec = (None, (1, TType.STRING, "id", "UTF8", None))  # 0  # 1
 all_structs.append(Device)
-Device.thrift_spec = (
-    None,  # 0
-    (
-        1,
-        TType.STRING,
-        "id",
-        "UTF8",
-        None,
-    ),  # 1
-)
+Device.thrift_spec = (None, (1, TType.STRING, "id", "UTF8", None))  # 0  # 1
 all_structs.append(OriginService)
-OriginService.thrift_spec = (
-    None,  # 0
-    (
-        1,
-        TType.STRING,
-        "name",
-        "UTF8",
-        None,
-    ),  # 1
-)
+OriginService.thrift_spec = (None, (1, TType.STRING, "name", "UTF8", None))  # 0  # 1
 all_structs.append(Geolocation)
-Geolocation.thrift_spec = (
-    None,  # 0
-    (
-        1,
-        TType.STRING,
-        "country_code",
-        "UTF8",
-        None,
-    ),  # 1
-)
+Geolocation.thrift_spec = (None, (1, TType.STRING, "country_code", "UTF8", None))  # 0  # 1
 all_structs.append(RequestId)
-RequestId.thrift_spec = (
-    None,  # 0
-    (
-        1,
-        TType.STRING,
-        "readable_id",
-        "UTF8",
-        None,
-    ),  # 1
-)
+RequestId.thrift_spec = (None, (1, TType.STRING, "readable_id", "UTF8", None))  # 0  # 1
 all_structs.append(Locale)
-Locale.thrift_spec = (
-    None,  # 0
-    (
-        1,
-        TType.STRING,
-        "locale_code",
-        "UTF8",
-        None,
-    ),  # 1
-)
+Locale.thrift_spec = (None, (1, TType.STRING, "locale_code", "UTF8", None))  # 0  # 1
 all_structs.append(Request)
 Request.thrift_spec = (
     None,  # 0
-    (
-        1,
-        TType.STRUCT,
-        "loid",
-        [Loid, None],
-        None,
-    ),  # 1
-    (
-        2,
-        TType.STRUCT,
-        "session",
-        [Session, None],
-        None,
-    ),  # 2
-    (
-        3,
-        TType.STRING,
-        "authentication_token",
-        "UTF8",
-        None,
-    ),  # 3
-    (
-        4,
-        TType.STRUCT,
-        "device",
-        [Device, None],
-        None,
-    ),  # 4
-    (
-        5,
-        TType.STRUCT,
-        "origin_service",
-        [OriginService, None],
-        None,
-    ),  # 5
-    (
-        6,
-        TType.STRUCT,
-        "geolocation",
-        [Geolocation, None],
-        None,
-    ),  # 6
-    (
-        7,
-        TType.STRUCT,
-        "request_id",
-        [RequestId, None],
-        None,
-    ),  # 7
-    (
-        8,
-        TType.STRUCT,
-        "locale",
-        [Locale, None],
-        None,
-    ),  # 8
+    (1, TType.STRUCT, "loid", [Loid, None], None),  # 1
+    (2, TType.STRUCT, "session", [Session, None], None),  # 2
+    (3, TType.STRING, "authentication_token", "UTF8", None),  # 3
+    (4, TType.STRUCT, "device", [Device, None], None),  # 4
+    (5, TType.STRUCT, "origin_service", [OriginService, None], None),  # 5
+    (6, TType.STRUCT, "geolocation", [Geolocation, None], None),  # 6
+    (7, TType.STRUCT, "request_id", [RequestId, None], None),  # 7
+    (8, TType.STRUCT, "locale", [Locale, None], None),  # 8
 )
 fix_spec(all_structs)
 del all_structs

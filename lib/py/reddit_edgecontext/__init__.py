@@ -117,6 +117,18 @@ class AuthenticationToken:
     def loid_created_ms(self) -> Optional[int]:
         raise NotImplementedError
 
+    @property
+    def on_behalf_of_id(self) -> Optional[str]:
+        raise NotImplementedError
+
+    @property
+    def on_behalf_of_roles(self) -> Optional[Set[str]]:
+        raise NotImplementedError
+
+    @property
+    def requests_elevated_access(self) -> Optional[bool]:
+        raise NotImplementedError
+
 
 class ValidatedAuthenticationToken(AuthenticationToken):
     def __init__(self, payload: Dict[str, Any]):
@@ -150,6 +162,18 @@ class ValidatedAuthenticationToken(AuthenticationToken):
     def loid_created_ms(self) -> Optional[int]:
         return (self.payload.get("loid") or {}).get("created_ms")
 
+    @property
+    def on_behalf_of_id(self) -> Optional[str]:
+        return (self.payload.get("obo") or {}).get("aid")
+
+    @property
+    def on_behalf_of_roles(self) -> Optional[Set[str]]:
+        return (self.payload.get("obo") or {}).get("roles")
+
+    @property
+    def requests_elevated_access(self) -> Optional[bool]:
+        return self.payload.get("sea")
+
 
 class InvalidAuthenticationToken(AuthenticationToken):
     @property
@@ -178,6 +202,18 @@ class InvalidAuthenticationToken(AuthenticationToken):
 
     @property
     def loid_created_ms(self) -> Optional[int]:
+        raise NoAuthenticationError
+
+    @property
+    def on_behalf_of_id(self) -> Optional[str]:
+        raise NoAuthenticationError
+
+    @property
+    def on_behalf_of_roles(self) -> Optional[Set[str]]:
+        raise NoAuthenticationError
+
+    @property
+    def requests_elevated_access(self) -> Optional[bool]:
         raise NoAuthenticationError
 
 
@@ -384,6 +420,12 @@ class Service(NamedTuple):
     authentication_token: AuthenticationToken
     """The authentication token for this request."""
 
+    def is_service(self) -> bool:
+        subject = self.authentication_token.subject
+        if subject is None or subject == "":
+            return False
+        return subject.startswith("service/")
+
     @property
     def name(self) -> str:
         """Return the authenticated service name.
@@ -395,11 +437,28 @@ class Service(NamedTuple):
 
         """
         subject = self.authentication_token.subject
-        if not (subject and subject.startswith("service/")):
+        if subject is None or subject == "":
             raise NoAuthenticationError
-
         name = subject[len("service/") :]
         return name
+
+    @property
+    def on_behalf_of_id(self) -> Optional[str]:
+        if not self.is_service():
+            raise NoAuthenticationError
+        return self.authentication_token.on_behalf_of_id
+
+    @property
+    def on_behalf_of_roles(self) -> Optional[Set[str]]:
+        if not self.is_service():
+            raise NoAuthenticationError
+        return self.authentication_token.on_behalf_of_roles
+
+    @property
+    def requests_elevated_access(self) -> Optional[bool]:
+        if not self.is_service():
+            raise NoAuthenticationError
+        return self.authentication_token.requests_elevated_access
 
 
 class EdgeContext:
@@ -480,9 +539,7 @@ class EdgeContext:
     @cached_property
     def locale(self) -> Locale:
         """:py:class:`~reddit_edgecontext.Locale` object for the current context."""
-        return Locale(
-            locale_code=self._t_request.locale.locale_code,
-        )
+        return Locale(locale_code=self._t_request.locale.locale_code)
 
     @cached_property
     def _t_request(self) -> TRequest:

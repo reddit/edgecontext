@@ -81,6 +81,9 @@ SERIALIZED_EDGECONTEXT_WITH_READABLE_REQUEST_ID = (
     + b"\x00"
 )
 
+SERIALIZED_EDGECONTEXT_WITH_VALID_SERVICE_AUTH = b"\x0c\x00\x01\x00\x0c\x00\x02\x00\x0b\x00\x03\x00\x00\x02\x0aeyJhbGciOiJSUzI1NiIsImtpZCI6IlNIQTI1NjpsWjBoa1dSc0RwYXBlQnUyZWtYOVdZMm9ZSW5Id2RSYVhUd3RCZWNEaWNJIiwidHlwIjoiSldUIn0.eyJzdWIiOiJzZXJ2aWNlL3Rlc3Qtc2VydmljZSIsImV4cCI6MjUyNDYwODAwMH0.P41Iahxu-Bbg5srTFSQTBkzwiff4ytlhVBUYuyYTFGY_7XCyKdZywUmVHRY_Q2w8Q2uaybnmuoM95JhRpdNYcTPIYWEby4Z5DSV-zMqqmHnP22aH_sAckFQl86Yw_2pdZpKKJ-KQkyT0vEkxe-vNs5HhEdBr6Rae0g2SKEr7RaPMoToq6xpucDAREVWa7yJMtyyNtiVixeLoxTegRLOZTFEVt4TTYKDuT2FdEY5P2b8BOSpFMoiv9w51gZO1qvn9Zjrl00Z-lI_onihMIkrG_viWVAlzEl8d5ZWuJVjHJvm7O0CS4OuhZocE2qbYQrw9THSS1Mh4YR-_r2v1ArYnVA\x0c\x00\x04\x00\x0c\x00\x05\x0b\x00\x01\x00\x00\x00\x0eorigin/service\x00\x0c\x00\x06\x00\x0c\x00\x07\x0b\x00\x01\x00\x00\x00$1566dce9-9567-4952-b23b-9fd72e111162\x00\x00"
+SERIALIZED_EDGECONTEXT_WITH_VALID_SERVICE_AUTH_AND_OPTIONS = b"\x0c\x00\x01\x00\x0c\x00\x02\x00\x0b\x00\x03\x00\x00\x02VeyJhbGciOiJSUzI1NiIsImtpZCI6IlNIQTI1NjpsWjBoa1dSc0RwYXBlQnUyZWtYOVdZMm9ZSW5Id2RSYVhUd3RCZWNEaWNJIiwidHlwIjoiSldUIn0.eyJzdWIiOiJzZXJ2aWNlL3Rlc3Qtc2VydmljZSIsImV4cCI6MjUyNDYwODAwMCwib2JvIjp7ImFpZCI6InQyX2RlYWRiZWVmIiwicm9sZXMiOlsiYWRtaW4iXX0sInNlYSI6dHJ1ZX0.PVefAKWUFfk_7QKen6Iz0Cfu95Yp92lYETlrxCUacLsa9u-qz36aet21iwFrdnJiz7gDeJRH7sOJyh6jRmkD0ptWs4Zl7VqpZY-ALgDOdhwSHoUIoV2L7twT-Dm3Tdyfbzq01fOni9ioq5akKnETC5IbLSOqp1ssWJcgo_9g-X-SdRiuf5u8YHD2Mrep5U21bkbYnm4rK9tX_oCnhrrp4rbXi5yogx594oNmOWUedIeyv6QY_xVGbaXOz7deBIWQY2fSYG3cpiBNtSYEJ4yDTbjGY0G1Vp78bX8YZlboc13TGoDpARdfHuHeQU0wAQEhi7pu0Q4FufEVua4q1f0P3A\x0c\x00\x04\x00\x0c\x00\x05\x0b\x00\x01\x00\x00\x00\x0eorigin/service\x00\x0c\x00\x06\x00\x0c\x00\x07\x0b\x00\x01\x00\x00\x00$a3b2d5c2-ab27-4948-9dae-78a3ffb46957\x00\x00"
+
 
 class AuthenticationTokenTests(unittest.TestCase):
     def test_validated_authentication_token(self):
@@ -127,6 +130,20 @@ class AuthenticationTokenTests(unittest.TestCase):
                 continue
             with self.assertRaises(NoAuthenticationError):
                 getattr(token, attr)
+
+    def test_validated_service_authentication_token(self):
+        payload = {
+            "sub": "service/test-service",
+            "exp": 1574458470,
+            "obo": {"aid": "t2_deadbeef", "roles": ["admin"]},
+            "sea": True,
+        }
+
+        token = ValidatedAuthenticationToken(payload)
+        self.assertEqual(token.subject, "service/test-service")
+        self.assertEqual(token.on_behalf_of_roles, ["admin"])
+        self.assertEqual(token.on_behalf_of_id, "t2_deadbeef")
+        self.assertEqual(token.requests_elevated_access, True)
 
 
 class EdgeContextTests(unittest.TestCase):
@@ -324,3 +341,21 @@ class EdgeContextTests(unittest.TestCase):
                 "edge_request_id": REQUEST_ID,
             },
         )
+
+    def test_service_auth(self):
+        request_context = self.factory.from_upstream(SERIALIZED_EDGECONTEXT_WITH_VALID_SERVICE_AUTH)
+
+        self.assertEqual(request_context.service.name, "test-service")
+        self.assertEqual(request_context.service.on_behalf_of_id, None)
+        self.assertEqual(request_context.service.on_behalf_of_roles, None)
+        self.assertEqual(request_context.service.requests_elevated_access, None)
+
+    def test_service_auth_with_additional_options(self):
+        request_context = self.factory.from_upstream(
+            SERIALIZED_EDGECONTEXT_WITH_VALID_SERVICE_AUTH_AND_OPTIONS
+        )
+
+        self.assertEqual(request_context.service.name, "test-service")
+        self.assertEqual(request_context.service.on_behalf_of_id, "t2_deadbeef")
+        self.assertEqual(request_context.service.on_behalf_of_roles, ["admin"])
+        self.assertEqual(request_context.service.requests_elevated_access, True)
