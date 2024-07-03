@@ -256,6 +256,8 @@ class EdgeContextTests(unittest.TestCase):
                 "device_id": self.DEVICE_ID,
             },
         )
+        with self.assertRaises(NoAuthenticationError):
+            request_context.service.name
 
     def test_logged_in_user(self):
         request_context = self.factory.from_upstream(SERIALIZED_EDGECONTEXT_WITH_VALID_AUTH)
@@ -285,6 +287,8 @@ class EdgeContextTests(unittest.TestCase):
                 "device_id": self.DEVICE_ID,
             },
         )
+        with self.assertRaises(NoAuthenticationError):
+            request_context.service.name
 
     def test_expired_token(self):
         request_context = self.factory.from_upstream(SERIALIZED_EDGECONTEXT_WITH_EXPIRED_AUTH)
@@ -349,6 +353,8 @@ class EdgeContextTests(unittest.TestCase):
         self.assertEqual(request_context.service.on_behalf_of_id, None)
         self.assertEqual(request_context.service.on_behalf_of_roles, None)
         self.assertEqual(request_context.service.requests_elevated_access, None)
+        with self.assertRaises(NoAuthenticationError):
+            request_context.user.id
 
     def test_service_auth_with_additional_options(self):
         request_context = self.factory.from_upstream(
@@ -359,3 +365,5 @@ class EdgeContextTests(unittest.TestCase):
         self.assertEqual(request_context.service.on_behalf_of_id, "t2_deadbeef")
         self.assertEqual(request_context.service.on_behalf_of_roles, ["admin"])
         self.assertEqual(request_context.service.requests_elevated_access, True)
+        with self.assertRaises(NoAuthenticationError):
+            request_context.user.id

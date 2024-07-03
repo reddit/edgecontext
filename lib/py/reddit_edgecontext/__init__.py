@@ -436,9 +436,9 @@ class Service(NamedTuple):
             service.
 
         """
-        subject = self.authentication_token.subject
-        if subject is None or subject == "":
+        if not self.is_service():
             raise NoAuthenticationError
+        subject = self.authentication_token.subject
         name = subject[len("service/") :]
         return name
 
