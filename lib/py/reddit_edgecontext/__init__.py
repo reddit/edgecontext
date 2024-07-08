@@ -436,7 +436,10 @@ class Service(NamedTuple):
             service.
 
         """
+        if not self.is_service():
+            raise NoAuthenticationError
         subject = self.authentication_token.subject
+        # Redundant check needed to make linter be happy
         if subject is None or subject == "":
             raise NoAuthenticationError
         name = subject[len("service/") :]
