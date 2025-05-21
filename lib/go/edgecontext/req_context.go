@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/gofrs/uuid"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/reddit/baseplate.go/experiments"
 )
 
@@ -47,8 +48,9 @@ func (e *EdgeRequestContext) getCtx() context.Context {
 func (e *EdgeRequestContext) AuthToken() *AuthenticationToken {
 	e.tokenOnce.Do(func() {
 		if token, err := e.impl.ValidateToken(e.raw.AuthToken); err != nil {
-			// empty jwt token is considered "normal", no need to spam them in logs.
-			if !errors.Is(err, ErrEmptyToken) {
+			// empty jwt token is considered "normal", no need to spam them in logs. likewise, expired JWT is "normal"
+			// and not exceptional.
+			if !errors.Is(err, ErrEmptyToken) || !errors.Is(err, jwt.ErrTokenExpired) {
 				e.impl.logger.Log(e.getCtx(), "token validation failed: "+err.Error())
 			}
 			e.token = nil
