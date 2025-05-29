@@ -2,8 +2,6 @@ module github.com/reddit/edgecontext
 
 go 1.23.0
 
-toolchain go1.24.3
-
 require (
 	github.com/apache/thrift v0.22.0
 	github.com/gofrs/uuid v4.4.0+incompatible
