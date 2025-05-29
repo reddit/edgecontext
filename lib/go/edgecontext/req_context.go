@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sync"
 
 	"github.com/gofrs/uuid"
 	"github.com/reddit/baseplate.go/experiments"
@@ -12,7 +13,9 @@ import (
 
 // An EdgeRequestContext contains context info about an edge request.
 type EdgeRequestContext struct {
-	Source ecdata.DataSource
+	source ecdata.DataSource
+
+	data func() ecdata.Data
 
 	// ctx is only used in error logging in AuthToken and UpdateExperimentEvent
 	// functions.
@@ -30,9 +33,18 @@ func NewFromSource(ctx context.Context, source ecdata.DataSource) *EdgeRequestCo
 		return nil
 	}
 	return &EdgeRequestContext{
-		Source: source,
-		ctx:    ctx,
+		source: source,
+		data: sync.OnceValue(func() ecdata.Data {
+			var data ecdata.Data
+			source.Populate(&data)
+			return data
+		}),
+		ctx: ctx,
 	}
+}
+
+func (e *EdgeRequestContext) Source() ecdata.DataSource {
+	return e.source
 }
 
 func (e *EdgeRequestContext) getCtx() context.Context {
@@ -47,7 +59,7 @@ func (e *EdgeRequestContext) getCtx() context.Context {
 //
 // If the validation failed, the error will be logged.
 func (e *EdgeRequestContext) AuthToken() *AuthenticationToken {
-	return e.Source.AuthenticationToken()
+	return e.data().AuthenticationToken()
 }
 
 // Header returns the raw, underlying edge request context header that was
@@ -56,41 +68,41 @@ func (e *EdgeRequestContext) AuthToken() *AuthenticationToken {
 // This is not really intended to be used directly but to allow us to propogate
 // the header between services.
 func (e *EdgeRequestContext) Header() string {
-	return e.Source.Header()
+	return e.Source().Header()
 }
 
 // SessionID returns the session id of this request.
 func (e *EdgeRequestContext) SessionID() string {
-	return e.Source.SessionID()
+	return e.data().SessionID
 }
 
 // DeviceID returns the device id of this request.
 func (e *EdgeRequestContext) DeviceID() string {
-	return e.Source.DeviceID()
+	return e.data().DeviceID
 }
 
 // User returns the info about the user of this request.
 func (e *EdgeRequestContext) User() User {
 	return User{
-		source: e.Source.User(),
+		data: e.data,
 	}
 }
 
 // CountryCode returns the two-character ISO 3166-1 country code where the
 // request orginated from.
 func (e *EdgeRequestContext) CountryCode() string {
-	return e.Source.CountryCode()
+	return e.data().CountryCode
 }
 
 // LocaleCode returns the IETF language code for the client
 func (e *EdgeRequestContext) LocaleCode() string {
-	return e.Source.LocaleCode()
+	return e.data().LocaleCode
 }
 
 // OriginService returns the info about the origin of this request.
 func (e *EdgeRequestContext) OriginService() OriginService {
 	return OriginService{
-		source: e.Source.OriginService(),
+		data: e.data,
 	}
 }
 
@@ -153,15 +165,15 @@ func (e *EdgeRequestContext) UpdateExperimentEvent(ee *experiments.ExperimentEve
 
 // OriginService holds metadata about the origin of the request.
 type OriginService struct {
-	source ecdata.OriginServiceSource
+	data func() ecdata.Data
 }
 
 // Name returns the name of the service that serves as the origin of the request.
 func (os OriginService) Name() string {
-	return os.source.Name()
+	return os.data().OriginServiceName
 }
 
 // RequestID is the id of this request.
 func (e *EdgeRequestContext) RequestID() string {
-	return e.Source.RequestID()
+	return e.data().RequestID
 }

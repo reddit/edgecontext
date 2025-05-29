@@ -16,32 +16,14 @@ func init() {
 var backend atomic.Pointer[Backend]
 
 type Backend struct {
-	SetEdgeContext func(context.Context, *EdgeRequestContext) context.Context
-	GetEdgeContext func(context.Context) (*EdgeRequestContext, bool)
-	Factory        func(Config) ecinterface.Factory
-	Init           func(Config) *Impl
-	New            func(context.Context, *Impl, NewArgs) (*EdgeRequestContext, error)
-	FromHeader     func(context.Context, string, *Impl) (*EdgeRequestContext, error)
+	Factory    func(Config) ecinterface.Factory
+	Init       func(Config) *Impl
+	New        func(context.Context, *Impl, NewArgs) (*EdgeRequestContext, error)
+	FromHeader func(context.Context, string, *Impl) (*EdgeRequestContext, error)
 }
 
 func defaultBackend() *Backend {
 	return &Backend{
-		SetEdgeContext: func(ctx context.Context, ec *EdgeRequestContext) context.Context {
-			if ec == nil {
-				return ctx
-			}
-			return v0.SetEdgeContext(ctx, ec.Source.(*v0.DataSource))
-		},
-		GetEdgeContext: func(ctx context.Context) (*EdgeRequestContext, bool) {
-			source, ok := v0.GetEdgeContext(ctx)
-			if !ok {
-				return nil, false
-			}
-			return &EdgeRequestContext{
-				Source: source,
-				ctx:    ctx,
-			}, true
-		},
 		Factory: func(cfg Config) ecinterface.Factory {
 			return v0.Factory(v0.Config{
 				Store: cfg.Store,
@@ -99,12 +81,6 @@ func defaultBackend() *Backend {
 func SetBackend(b *Backend) {
 	if b == nil {
 		panic("backend cannot be nil")
-	}
-	if b.SetEdgeContext == nil {
-		panic("SetEdgeContext cannot be nil")
-	}
-	if b.GetEdgeContext == nil {
-		panic("GetEdgeContext cannot be nil")
 	}
 	if b.Factory == nil {
 		panic("Factory cannot be nil")

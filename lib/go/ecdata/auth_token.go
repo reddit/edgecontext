@@ -5,11 +5,20 @@ import (
 	"github.com/reddit/baseplate.go/timebp"
 )
 
+type LoID struct {
+	ID        string                      `json:"id,omitempty"`
+	CreatedAt timebp.TimestampMillisecond `json:"created_ms,omitempty"`
+}
+
+// OnBehalfOf defines the structure for the "on behalf of" field in the authentication token.
+type OnBehalfOf struct {
+	AccountID string   `json:"aid,omitempty"`
+	Roles     []string `json:"roles,omitempty"`
+}
+
 // AuthenticationToken defines the json format of the authentication token.
 type AuthenticationToken struct {
 	jwt.RegisteredClaims
-
-	// NOTE: Subject field is in StandardClaims.
 
 	Roles []string `json:"roles,omitempty"`
 
@@ -17,17 +26,10 @@ type AuthenticationToken struct {
 	OAuthClientType string   `json:"client_type,omitempty"`
 	Scopes          []string `json:"scopes,omitempty"`
 
-	LoID struct {
-		ID        string                      `json:"id,omitempty"`
-		CreatedAt timebp.TimestampMillisecond `json:"created_ms,omitempty"`
-	} `json:"loid,omitempty"`
-
-	OnBehalfOf *struct {
-		AccountID string   `json:"aid,omitempty"`
-		Roles     []string `json:"roles,omitempty"`
-	} `json:"obo,omitempty"`
-
-	ServiceRequestedElevatedAccess bool `json:"sea,omitempty"`
+	LoID LoID `json:"loid,omitempty"`
+	
+	OnBehalfOf                     *OnBehalfOf `json:"obo,omitempty"`
+	ServiceRequestedElevatedAccess bool        `json:"sea,omitempty"`
 }
 
 // Subject returns the subject field of the token.

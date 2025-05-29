@@ -36,15 +36,22 @@ type Impl struct {
 	ecinterface.Interface
 }
 
+type dataSourceContextKey struct{}
+
 // SetEdgeContext sets the given EdgeRequestContext on the context object.
 func SetEdgeContext(ctx context.Context, ec *EdgeRequestContext) context.Context {
-	return getBackend().SetEdgeContext(ctx, ec)
+	return ecdata.SetDataSource(ctx, ec.Source())
 }
 
 // GetEdgeContext gets the current EdgeRequestContext from the context object,
 // if set.
 func GetEdgeContext(ctx context.Context) (*EdgeRequestContext, bool) {
-	return getBackend().GetEdgeContext(ctx)
+	source, ok := ecdata.GetDataSource(ctx)
+	if !ok {
+		return nil, false
+	}
+
+	return NewFromSource(ctx, source), true
 }
 
 // Config for Init function.

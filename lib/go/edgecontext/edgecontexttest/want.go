@@ -57,10 +57,7 @@ func WithServiceRequestsElevatedAccess() WithServiceOption {
 
 func WithOnBehalfOfUser(id string, roles []string) WithServiceOption {
 	return func(cfg *serviceConfig) {
-		cfg.token.OnBehalfOf = &struct {
-			AccountID string   `json:"aid,omitempty"`
-			Roles     []string `json:"roles,omitempty"`
-		}{
+		cfg.token.OnBehalfOf = &ecdata.OnBehalfOf{
 			AccountID: id,
 			Roles:     roles,
 		}

@@ -1,33 +1,37 @@
 package ecdata
 
 import (
+	"context"
 	"time"
 )
 
-type AuthenticationTokenSource interface {
-	AuthenticationToken() *AuthenticationToken
-}
-type UserDataSource interface {
-	AuthenticationTokenSource
-
-	InsecureCookieCreatedAt() time.Time
-	InsecureLoID() string
-}
-
-type OriginServiceSource interface {
-	Name() string
-}
 type DataSource interface {
-	AuthenticationTokenSource
-
 	Header() string
+	Populate(data *Data)
+}
 
-	CountryCode() string
-	DeviceID() string
-	LocaleCode() string
-	RequestID() string
-	SessionID() string
+type Data struct {
+	AuthenticationToken     func() *AuthenticationToken
+	CountryCode             string
+	DeviceID                string
+	LocaleCode              string
+	RequestID               string
+	SessionID               string
+	OriginServiceName       string
+	InsecureLoID            string
+	InsecureCookieCreatedAt time.Time
+}
 
-	User() UserDataSource
-	OriginService() OriginServiceSource
+type dataSourceContextKey struct{}
+
+func SetDataSource(ctx context.Context, ds DataSource) context.Context {
+	if ds == nil {
+		return ctx
+	}
+	return context.WithValue(ctx, dataSourceContextKey{}, ds)
+}
+
+func GetDataSource(ctx context.Context) (DataSource, bool) {
+	ds, ok := ctx.Value(dataSourceContextKey{}).(DataSource)
+	return ds, ok
 }

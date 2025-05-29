@@ -15,14 +15,14 @@ const userPrefix = "t2_"
 // An User wraps *EdgeRequestContext and provides info about a logged in or
 // logged our user.
 type User struct {
-	source ecdata.UserDataSource
+	data func() ecdata.Data
 }
 
 // ID returns the authenticated account id of the user.
 //
 // ok will be false if the user is not logged in.
 func (u User) ID() (id string, ok bool) {
-	token := u.source.AuthenticationToken()
+	token := u.data().AuthenticationToken()
 	if token == nil {
 		return
 	}
@@ -46,12 +46,12 @@ func (u User) LoID() (loid string, ok bool) {
 	}
 
 	// Then, we use the loid from the thrift payload.
-	if insecure := u.source.InsecureLoID(); insecure != "" {
+	if insecure := u.data().InsecureLoID; insecure != "" {
 		return insecure, true
 	}
 
 	// Finally, we fallback to the loid from the JWT token.
-	token := u.source.AuthenticationToken()
+	token := u.data().AuthenticationToken()
 	if token == nil {
 		return
 	}
@@ -60,10 +60,10 @@ func (u User) LoID() (loid string, ok bool) {
 
 // CookieCreatedAt returns the time the cookie was created.
 func (u User) CookieCreatedAt() (ts time.Time, ok bool) {
-	if insecure := u.source.InsecureCookieCreatedAt(); !insecure.IsZero() {
+	if insecure := u.data().InsecureCookieCreatedAt; !insecure.IsZero() {
 		return insecure, true
 	}
-	token := u.source.AuthenticationToken()
+	token := u.data().AuthenticationToken()
 	if token == nil {
 		return
 	}
@@ -73,7 +73,7 @@ func (u User) CookieCreatedAt() (ts time.Time, ok bool) {
 
 // Roles returns the roles the user has.
 func (u User) Roles() []string {
-	token := u.source.AuthenticationToken()
+	token := u.data().AuthenticationToken()
 	if token == nil {
 		return nil
 	}
