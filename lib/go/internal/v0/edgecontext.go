@@ -20,8 +20,8 @@ import (
 
 func init() {
 	copyEC := func(dst, src context.Context) context.Context {
-		if ec, ok := ecdata.GetDataSource(src); ok {
-			dst = ecdata.SetDataSource(dst, ec)
+		if ec, ok := GetEdgeContext(src); ok {
+			dst = SetEdgeContext(dst, ec)
 		}
 		return dst
 	}
@@ -57,11 +57,11 @@ var _ ecinterface.Interface = (*Impl)(nil)
 
 // ContextToHeader implements ecinterface.Interface.
 func (impl *Impl) ContextToHeader(ctx context.Context) (header string, ok bool) {
-	source, ok := ecdata.GetDataSource(ctx)
+	ec, ok := GetEdgeContext(ctx)
 	if !ok {
 		return "", false
 	}
-	return source.Header(), true
+	return ec.Header(), true
 }
 
 // HeaderToContext implements ecinterface.Interface.
@@ -70,7 +70,28 @@ func (impl *Impl) HeaderToContext(ctx context.Context, header string) (context.C
 	if err != nil {
 		return ctx, fmt.Errorf("edgecontext.Impl.HeaderToContext: failed to parse header: %w", err)
 	}
-	return ecdata.SetDataSource(ctx, ec), nil
+	return SetEdgeContext(ctx, ec), nil
+}
+
+type contextKey int
+
+const (
+	edgeContextKey contextKey = iota
+)
+
+// SetEdgeContext sets the given DataSource on the context object.
+func SetEdgeContext(ctx context.Context, ec *DataSource) context.Context {
+	if ec == nil {
+		return ctx
+	}
+	return context.WithValue(ctx, edgeContextKey, ec)
+}
+
+// GetEdgeContext gets the current DataSource from the context object,
+// if set.
+func GetEdgeContext(ctx context.Context) (ec *DataSource, ok bool) {
+	ec, ok = ctx.Value(edgeContextKey).(*DataSource)
+	return
 }
 
 // Config for Init function.
@@ -131,7 +152,7 @@ type NewArgs struct {
 func New(ctx context.Context, impl *Impl, args NewArgs) (*DataSource, error) {
 	request := ecthrift.NewRequest()
 	if args.LoID != "" {
-		if !strings.HasPrefix(args.LoID, "t2_") {
+		if !strings.HasPrefix(args.LoID, "t") {
 			return nil, ecdata.ErrLoIDWrongPrefix
 		}
 		request.Loid = &ecthrift.Loid{

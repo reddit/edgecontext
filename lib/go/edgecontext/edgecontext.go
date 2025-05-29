@@ -40,18 +40,13 @@ type dataSourceContextKey struct{}
 
 // SetEdgeContext sets the given EdgeRequestContext on the context object.
 func SetEdgeContext(ctx context.Context, ec *EdgeRequestContext) context.Context {
-	return ecdata.SetDataSource(ctx, ec.Source())
+	return getBackend().Set(ctx, ec)
 }
 
 // GetEdgeContext gets the current EdgeRequestContext from the context object,
 // if set.
 func GetEdgeContext(ctx context.Context) (*EdgeRequestContext, bool) {
-	source, ok := ecdata.GetDataSource(ctx)
-	if !ok {
-		return nil, false
-	}
-
-	return NewFromSource(ctx, source), true
+	return getBackend().Get(ctx)
 }
 
 // Config for Init function.

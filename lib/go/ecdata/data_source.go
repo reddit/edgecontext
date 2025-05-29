@@ -1,7 +1,6 @@
 package ecdata
 
 import (
-	"context"
 	"time"
 )
 
@@ -20,18 +19,4 @@ type Data struct {
 	OriginServiceName       string
 	InsecureLoID            string
 	InsecureCookieCreatedAt time.Time
-}
-
-type dataSourceContextKey struct{}
-
-func SetDataSource(ctx context.Context, ds DataSource) context.Context {
-	if ds == nil {
-		return ctx
-	}
-	return context.WithValue(ctx, dataSourceContextKey{}, ds)
-}
-
-func GetDataSource(ctx context.Context) (DataSource, bool) {
-	ds, ok := ctx.Value(dataSourceContextKey{}).(DataSource)
-	return ds, ok
 }

@@ -16,6 +16,8 @@ func init() {
 var backend atomic.Pointer[Backend]
 
 type Backend struct {
+	Set        func(context.Context, *EdgeRequestContext) context.Context
+	Get        func(context.Context) (*EdgeRequestContext, bool)
 	Factory    func(Config) ecinterface.Factory
 	Init       func(Config) *Impl
 	New        func(context.Context, *Impl, NewArgs) (*EdgeRequestContext, error)
@@ -24,6 +26,19 @@ type Backend struct {
 
 func defaultBackend() *Backend {
 	return &Backend{
+		Set: func(ctx context.Context, ec *EdgeRequestContext) context.Context {
+			if ec == nil {
+				return ctx
+			}
+			return v0.SetEdgeContext(ctx, ec.Source().(*v0.DataSource))
+		},
+		Get: func(ctx context.Context) (*EdgeRequestContext, bool) {
+			source, ok := v0.GetEdgeContext(ctx)
+			if !ok {
+				return nil, false
+			}
+			return NewFromSource(ctx, source), true
+		},
 		Factory: func(cfg Config) ecinterface.Factory {
 			return v0.Factory(v0.Config{
 				Store: cfg.Store,
@@ -81,6 +96,12 @@ func defaultBackend() *Backend {
 func SetBackend(b *Backend) {
 	if b == nil {
 		panic("backend cannot be nil")
+	}
+	if b.Set == nil {
+		panic("Set cannot be nil")
+	}
+	if b.Get == nil {
+		panic("Get cannot be nil")
 	}
 	if b.Factory == nil {
 		panic("Factory cannot be nil")
