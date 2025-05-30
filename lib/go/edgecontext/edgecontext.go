@@ -11,20 +11,28 @@ import (
 	"github.com/reddit/baseplate.go/secrets"
 )
 
+// HeaderUnmarshaler is responsible for unmarshaling the edge context header into a Data struct.
 type HeaderUnmarshaler interface {
+	// Header returns the raw header string that can be unmarshaled.
 	Header() string
+
+	// Unmarshal unmarshals the header into the provided Data struct. An EdgeRequestContext will only call Unmarshal once and
+	// cache the result.
 	Unmarshal(data *Data)
 }
 
 type Data struct {
-	AuthenticationToken     func() *AuthenticationToken
-	CountryCode             string
-	DeviceID                string
-	LocaleCode              string
-	RequestID               string
-	SessionID               string
-	OriginServiceName       string
-	InsecureLoID            string
+	AuthenticationToken func() *AuthenticationToken
+	CountryCode         string
+	DeviceID            string
+	LocaleCode          string
+	RequestID           string
+	SessionID           string
+	OriginServiceName   string
+
+	// InsecureLoID is the LoID from the loid cookie/header rather than the one from the auth token.
+	InsecureLoID string
+	// InsecureCookieCreatedAt is the created time of the LoID cookie/header rather than the one from the auth token.
 	InsecureCookieCreatedAt time.Time
 }
 
