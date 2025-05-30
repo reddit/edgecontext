@@ -1,20 +1,19 @@
-package v0
+package edgecontext
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"regexp"
+	"log/slog"
 	"strings"
+	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/reddit/baseplate.go/detach"
 	"github.com/reddit/baseplate.go/ecinterface"
 	"github.com/reddit/baseplate.go/secrets"
 	"github.com/reddit/baseplate.go/timebp"
-	"github.com/reddit/edgecontext/lib/go/ecdata"
-
 	ecthrift "github.com/reddit/edgecontext/lib/go/internal/reddit/edgecontext"
 )
 
@@ -34,87 +33,57 @@ func init() {
 	})
 }
 
-const LoIDPrefix = ecdata.LoIDPrefix
-
-var LocaleRegex = regexp.MustCompile(`^[a-z]{2,}([_|\-][\da-zA-Z]{2,})*$`)
-
 var (
 	serializerPool   = thrift.NewTSerializerPoolSizeFactory(1024, thrift.NewTBinaryProtocolFactoryDefault())
 	deserializerPool = thrift.NewTDeserializerPoolSizeFactory(1024, thrift.NewTBinaryProtocolFactoryDefault())
 )
 
-// An Impl is an initialized edge context implementation.
-//
-// It implements ecinterface.Interface.
-//
-// Please call Init function to initialize it.
-type Impl struct {
+type v0Impl struct {
 	store     *secrets.Store
 	keysValue atomic.Value
 }
 
 var _ ecinterface.Interface = (*Impl)(nil)
 
-// ContextToHeader implements ecinterface.Interface.
-func (impl *Impl) ContextToHeader(ctx context.Context) (header string, ok bool) {
-	ec, ok := GetEdgeContext(ctx)
+func (impl *v0Impl) ContextToHeader(ctx context.Context) (header string, ok bool) {
+	ec, ok := v0GetEdgeContext(ctx)
 	if !ok {
 		return "", false
 	}
 	return ec.Header(), true
 }
 
-// HeaderToContext implements ecinterface.Interface.
-func (impl *Impl) HeaderToContext(ctx context.Context, header string) (context.Context, error) {
-	ec, err := FromHeader(ctx, header, impl)
+func (impl *v0Impl) HeaderToContext(ctx context.Context, header string) (context.Context, error) {
+	ec, err := v0FromHeader(ctx, header, impl)
 	if err != nil {
 		return ctx, fmt.Errorf("edgecontext.Impl.HeaderToContext: failed to parse header: %w", err)
 	}
-	return SetEdgeContext(ctx, ec), nil
+	return v0SetEdgeContext(ctx, ec), nil
 }
 
-type contextKey int
+type edgeContextKey struct{}
 
-const (
-	edgeContextKey contextKey = iota
-)
-
-// SetEdgeContext sets the given DataSource on the context object.
-func SetEdgeContext(ctx context.Context, ec *DataSource) context.Context {
+func v0SetEdgeContext(ctx context.Context, ec *v0HeaderUnmarshaler) context.Context {
 	if ec == nil {
 		return ctx
 	}
-	return context.WithValue(ctx, edgeContextKey, ec)
+	return context.WithValue(ctx, edgeContextKey{}, ec)
 }
 
-// GetEdgeContext gets the current DataSource from the context object,
-// if set.
-func GetEdgeContext(ctx context.Context) (ec *DataSource, ok bool) {
-	ec, ok = ctx.Value(edgeContextKey).(*DataSource)
+func v0GetEdgeContext(ctx context.Context) (ec *v0HeaderUnmarshaler, ok bool) {
+	ec, ok = ctx.Value(edgeContextKey{}).(*v0HeaderUnmarshaler)
 	return
 }
 
-// Config for Init function.
-type Config struct {
-	// The secret store to get the keys for jwt validation
-	Store *secrets.Store
-}
-
-// Factory returns an ecinterface.Factory implementation by wrapping Init.
-//
-// The Store in cfg will be replaced by the Factory arg.
-func Factory(cfg Config) ecinterface.Factory {
+func v0Factory(cfg Config) ecinterface.Factory {
 	return func(args ecinterface.FactoryArgs) (ecinterface.Interface, error) {
 		cfg.Store = args.Store
 		return Init(cfg), nil
 	}
 }
 
-// Init intializes an Impl.
-//
-// It also calls ecinterface.Set to store the implementation created globally.
-func Init(cfg Config) *Impl {
-	impl := &Impl{
+func v0Init(cfg Config) *v0Impl {
+	impl := &v0Impl{
 		store: cfg.Store,
 	}
 	impl.store.AddMiddlewares(impl.validatorMiddleware)
@@ -122,38 +91,11 @@ func Init(cfg Config) *Impl {
 	return impl
 }
 
-// NewArgs are the args for New function.
-//
-// All fields are optional.
-type NewArgs struct {
-	// If LoID is non-empty, it must have prefix of LoIDPrefix ("t2_").
-	LoID          string
-	LoIDCreatedAt time.Time
-
-	SessionID string
-
-	DeviceID string
-
-	AuthToken string
-
-	OriginServiceName string
-
-	CountryCode string
-
-	RequestID string
-
-	LocaleCode string
-}
-
-// New creates a new DataSource from scratch.
-//
-// This function should be used by services on the edge talking to clients
-// directly, after talked to authentication service to get the auth token.
-func New(ctx context.Context, impl *Impl, args NewArgs) (*DataSource, error) {
+func v0New(ctx context.Context, impl *v0Impl, args NewArgs) (*v0HeaderUnmarshaler, error) {
 	request := ecthrift.NewRequest()
 	if args.LoID != "" {
 		if !strings.HasPrefix(args.LoID, "t") {
-			return nil, ecdata.ErrLoIDWrongPrefix
+			return nil, ErrLoIDWrongPrefix
 		}
 		request.Loid = &ecthrift.Loid{
 			ID:        args.LoID,
@@ -187,7 +129,7 @@ func New(ctx context.Context, impl *Impl, args NewArgs) (*DataSource, error) {
 	}
 	if args.LocaleCode != "" {
 		if !LocaleRegex.MatchString(args.LocaleCode) {
-			return nil, ecdata.ErrInvalidLocaleCode
+			return nil, ErrInvalidLocaleCode
 		}
 		request.Locale = &ecthrift.Locale{
 			LocaleCode: ecthrift.LocaleCode(args.LocaleCode),
@@ -200,7 +142,7 @@ func New(ctx context.Context, impl *Impl, args NewArgs) (*DataSource, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &DataSource{
+	return &v0HeaderUnmarshaler{
 		impl:   impl,
 		header: header,
 		raw:    args,
@@ -208,9 +150,7 @@ func New(ctx context.Context, impl *Impl, args NewArgs) (*DataSource, error) {
 	}, nil
 }
 
-// FromHeader returns a new DataSource from the given header string
-// using the given Impl.
-func FromHeader(ctx context.Context, header string, impl *Impl) (*DataSource, error) {
+func v0FromHeader(ctx context.Context, header string, impl *v0Impl) (*v0HeaderUnmarshaler, error) {
 	if header == "" {
 		return nil, nil
 	}
@@ -245,10 +185,75 @@ func FromHeader(ctx context.Context, header string, impl *Impl) (*DataSource, er
 	if request.Locale != nil {
 		raw.LocaleCode = string(request.Locale.LocaleCode)
 	}
-	return &DataSource{
+	return &v0HeaderUnmarshaler{
 		impl:   impl,
 		header: header,
 		raw:    raw,
 		ctx:    ctx,
 	}, nil
+}
+
+type v0HeaderUnmarshaler struct {
+	impl *v0Impl
+
+	// header and raw should always be set during initialization
+	header string
+	raw    NewArgs
+
+	// token will be validated on first use
+	tokenOnce sync.Once
+	token     *AuthenticationToken
+
+	// ctx is only used in error logging in AuthToken and UpdateExperimentEvent
+	// functions.
+	//
+	// Since an EdgeContext object is always 1:1 mapped to a request,
+	// although storing a ctx object is in general not recommended,
+	// it does make sense in this case,
+	// and could help us avoiding the awkward situation of needing to pass in ctx
+	// object into those functions.
+	ctx context.Context
+}
+
+var _ HeaderUnmarshaler = (*v0HeaderUnmarshaler)(nil)
+
+func (e *v0HeaderUnmarshaler) getCtx() context.Context {
+	if e.ctx != nil {
+		return e.ctx
+	}
+	return context.Background()
+}
+
+func (e *v0HeaderUnmarshaler) Unmarshal(data *Data) {
+	data.AuthenticationToken = e.AuthenticationToken
+	data.SessionID = e.raw.SessionID
+	data.DeviceID = e.raw.DeviceID
+	data.CountryCode = e.raw.CountryCode
+	data.LocaleCode = e.raw.LocaleCode
+	data.RequestID = e.raw.RequestID
+	data.OriginServiceName = e.raw.OriginServiceName
+	data.InsecureLoID = e.raw.LoID
+	data.InsecureCookieCreatedAt = e.raw.LoIDCreatedAt
+}
+
+func (e *v0HeaderUnmarshaler) AuthenticationToken() *AuthenticationToken {
+	e.tokenOnce.Do(func() {
+		if token, err := e.impl.ValidateToken(e.raw.AuthToken); err != nil {
+			// empty jwt token is considered "normal", no need to spam them in logs.
+			if !errors.Is(err, ErrEmptyToken) {
+				slog.ErrorContext(
+					e.getCtx(), "token validation failed",
+					"err", err,
+				)
+			}
+			e.token = nil
+		} else {
+			e.token = token
+		}
+	})
+	return e.token
+}
+
+func (e *v0HeaderUnmarshaler) Header() string {
+	return e.header
 }

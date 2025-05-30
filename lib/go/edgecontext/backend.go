@@ -6,7 +6,6 @@ import (
 	"sync/atomic"
 
 	"github.com/reddit/baseplate.go/ecinterface"
-	v0 "github.com/reddit/edgecontext/lib/go/internal/v0"
 )
 
 func init() {
@@ -15,12 +14,24 @@ func init() {
 
 var backend atomic.Pointer[Backend]
 
+// Backend provides the interface for the edgecontext package to interact with the underlying implementation.
 type Backend struct {
-	Set        func(context.Context, *EdgeRequestContext) context.Context
-	Get        func(context.Context) (*EdgeRequestContext, bool)
-	Factory    func(Config) ecinterface.Factory
-	Init       func(Config) *Impl
-	New        func(context.Context, *Impl, NewArgs) (*EdgeRequestContext, error)
+	// Set is the implementation for SetEdgeContext.
+	Set func(context.Context, *EdgeRequestContext) context.Context
+
+	// Get is the implementation for GetEdgeContext.
+	Get func(context.Context) (*EdgeRequestContext, bool)
+
+	// Factory is the implementation for the Factory function.
+	Factory func(Config) ecinterface.Factory
+
+	// Init is the implementation for the Init function.
+	Init func(Config) *Impl
+
+	// New is the implementation for New.
+	New func(context.Context, *Impl, NewArgs) (*EdgeRequestContext, error)
+
+	// FromHeader is the implementation for FromHeader.
 	FromHeader func(context.Context, string, *Impl) (*EdgeRequestContext, error)
 }
 
@@ -30,36 +41,36 @@ func defaultBackend() *Backend {
 			if ec == nil {
 				return ctx
 			}
-			return v0.SetEdgeContext(ctx, ec.Source().(*v0.DataSource))
+			return v0SetEdgeContext(ctx, ec.Source().(*v0HeaderUnmarshaler))
 		},
 		Get: func(ctx context.Context) (*EdgeRequestContext, bool) {
-			source, ok := v0.GetEdgeContext(ctx)
+			source, ok := v0GetEdgeContext(ctx)
 			if !ok {
 				return nil, false
 			}
 			return NewFromSource(ctx, source), true
 		},
 		Factory: func(cfg Config) ecinterface.Factory {
-			return v0.Factory(v0.Config{
+			return v0Factory(Config{
 				Store: cfg.Store,
 			})
 		},
 		Init: func(cfg Config) *Impl {
 			return &Impl{
-				Interface: v0.Init(v0.Config{
+				Interface: v0Init(Config{
 					Store: cfg.Store,
 				}),
 			}
 		},
 		New: func(ctx context.Context, impl *Impl, args NewArgs) (*EdgeRequestContext, error) {
-			unwrapped, ok := impl.Interface.(*v0.Impl)
+			unwrapped, ok := impl.Interface.(*v0Impl)
 			if !ok {
-				return nil, fmt.Errorf("unwrapped interface is not a v0.Impl")
+				return nil, fmt.Errorf("unwrapped interface is not a v0Impl")
 			}
-			source, err := v0.New(
+			source, err := v0New(
 				ctx,
 				unwrapped,
-				v0.NewArgs{
+				NewArgs{
 					LoID:              args.LoID,
 					LoIDCreatedAt:     args.LoIDCreatedAt,
 					SessionID:         args.SessionID,
@@ -77,11 +88,11 @@ func defaultBackend() *Backend {
 			return NewFromSource(ctx, source), nil
 		},
 		FromHeader: func(ctx context.Context, header string, impl *Impl) (*EdgeRequestContext, error) {
-			unwrapped, ok := impl.Interface.(*v0.Impl)
+			unwrapped, ok := impl.Interface.(*v0Impl)
 			if !ok {
-				return nil, fmt.Errorf("unwrapped interface is not a v0.Impl")
+				return nil, fmt.Errorf("unwrapped interface is not a v0Impl")
 			}
-			source, err := v0.FromHeader(ctx, header, unwrapped)
+			source, err := v0FromHeader(ctx, header, unwrapped)
 			if err != nil {
 				return nil, fmt.Errorf("creating v0 data Source: %w", err)
 			}
@@ -93,6 +104,7 @@ func defaultBackend() *Backend {
 	}
 }
 
+// SetBackend sets the backend for the edgecontext package. This should only be called once during setup.
 func SetBackend(b *Backend) {
 	if b == nil {
 		panic("backend cannot be nil")

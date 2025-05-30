@@ -2,29 +2,47 @@ package edgecontext
 
 import (
 	"context"
+	"errors"
+	"regexp"
 	"time"
 
 	"github.com/reddit/baseplate.go/ecinterface"
 	"github.com/reddit/baseplate.go/log"
 	"github.com/reddit/baseplate.go/secrets"
-	"github.com/reddit/edgecontext/lib/go/ecdata"
 )
 
+type HeaderUnmarshaler interface {
+	Header() string
+	Unmarshal(data *Data)
+}
+
+type Data struct {
+	AuthenticationToken     func() *AuthenticationToken
+	CountryCode             string
+	DeviceID                string
+	LocaleCode              string
+	RequestID               string
+	SessionID               string
+	OriginServiceName       string
+	InsecureLoID            string
+	InsecureCookieCreatedAt time.Time
+}
+
 // LoIDPrefix is the prefix for all LoIDs.
-const LoIDPrefix = ecdata.LoIDPrefix
+const LoIDPrefix = "t2_"
 
 // LocaleRegex validates that locale codes are correctly formatted. They can contain
 // either a language, or a language and region specifier separated by an underscore.
 // e.g. en, en_US
-var LocaleRegex = ecdata.LocaleRegex
+var LocaleRegex = regexp.MustCompile(`^[a-z]{2,}([_|\-][\da-zA-Z]{2,})*$`)
 
 var (
 	// ErrLoIDWrongPrefix is an error could be returned by New() when passed in LoID
 	// does not have the correct prefix.
-	ErrLoIDWrongPrefix = ecdata.ErrLoIDWrongPrefix
+	ErrLoIDWrongPrefix = errors.New("edgecontext: loid should have " + LoIDPrefix + " prefix")
 
 	// ErrInvalidLocaleCode is returned by New() when an invalid locale code is passed in.
-	ErrInvalidLocaleCode = ecdata.ErrInvalidLocaleCode
+	ErrInvalidLocaleCode = errors.New("edgecontext: locale code should match format: en, en_US")
 )
 
 // An Impl is an initialized edge context implementation.
@@ -35,8 +53,6 @@ var (
 type Impl struct {
 	ecinterface.Interface
 }
-
-type dataSourceContextKey struct{}
 
 // SetEdgeContext sets the given EdgeRequestContext on the context object.
 func SetEdgeContext(ctx context.Context, ec *EdgeRequestContext) context.Context {

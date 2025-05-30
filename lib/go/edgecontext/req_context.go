@@ -8,14 +8,13 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/reddit/baseplate.go/experiments"
-	"github.com/reddit/edgecontext/lib/go/ecdata"
 )
 
 // An EdgeRequestContext contains context info about an edge request.
 type EdgeRequestContext struct {
-	source ecdata.DataSource
+	source HeaderUnmarshaler
 
-	data func() ecdata.Data
+	data func() Data
 
 	// ctx is only used in error logging in AuthToken and UpdateExperimentEvent
 	// functions.
@@ -28,22 +27,22 @@ type EdgeRequestContext struct {
 	ctx context.Context
 }
 
-func NewFromSource(ctx context.Context, source ecdata.DataSource) *EdgeRequestContext {
+func NewFromSource(ctx context.Context, source HeaderUnmarshaler) *EdgeRequestContext {
 	if source == nil {
 		return nil
 	}
 	return &EdgeRequestContext{
 		source: source,
-		data: sync.OnceValue(func() ecdata.Data {
-			var data ecdata.Data
-			source.Populate(&data)
+		data: sync.OnceValue(func() Data {
+			var data Data
+			source.Unmarshal(&data)
 			return data
 		}),
 		ctx: ctx,
 	}
 }
 
-func (e *EdgeRequestContext) Source() ecdata.DataSource {
+func (e *EdgeRequestContext) Source() HeaderUnmarshaler {
 	return e.source
 }
 
@@ -165,7 +164,7 @@ func (e *EdgeRequestContext) UpdateExperimentEvent(ee *experiments.ExperimentEve
 
 // OriginService holds metadata about the origin of the request.
 type OriginService struct {
-	data func() ecdata.Data
+	data func() Data
 }
 
 // Name returns the name of the service that serves as the origin of the request.

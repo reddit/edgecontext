@@ -1,12 +1,74 @@
-package edgecontext_test
+package edgecontext
 
 import (
+	"context"
+	"errors"
 	"testing"
 
 	"github.com/golang-jwt/jwt/v5"
-
-	"github.com/reddit/edgecontext/lib/go/edgecontext"
+	"github.com/reddit/baseplate.go/secrets"
 )
+
+// copied from https://github.com/reddit/edgecontext.py/blob/420e58728ee7085a2f91c5db45df233142b251f9/tests/edge_context_tests.py#L54
+const validToken = `eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0Ml9leGFtcGxlIiwiZXhwIjoyNTI0NjA4MDAwfQ.dRzzfc9GmzyqfAbl6n_C55JJueraXk9pp3v0UYXw0ic6W_9RVa7aA1zJWm7slX9lbuYldwUtHvqaSsOpjF34uqr0-yMoRDVpIrbkwwJkNuAE8kbXGYFmXf3Ip25wMHtSXn64y2gJN8TtgAAnzjjGs9yzK9BhHILCDZTtmPbsUepxKmWTiEX2BdurUMZzinbcvcKY4Rb_Fl0pwsmBJFs7nmk5PvTyC6qivCd8ZmMc7dwL47mwy_7ouqdqKyUEdLoTEQ_psuy9REw57PRe00XCHaTSTRDCLmy4gAN6J0J056XoRHLfFcNbtzAmqmtJ_D9HGIIXPKq-KaggwK9I4qLX7g`
+
+func newImpl(t *testing.T) *v0Impl {
+	store, _, err := secrets.NewTestSecrets(
+		context.Background(),
+		make(map[string]secrets.GenericSecret),
+	)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	t.Cleanup(func() {
+		store.Close()
+	})
+
+	return v0Init(Config{Store: store})
+}
+
+func TestValidToken(t *testing.T) {
+	impl := newImpl(t)
+	token, err := impl.ValidateToken(validToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := "t2_example"
+	actual := token.Subject()
+	if actual != expected {
+		t.Errorf("subject expected %q, got %q", expected, actual)
+	}
+}
+
+func TestInvalidToken(t *testing.T) {
+	impl := newImpl(t)
+	cases := []struct {
+		name  string
+		token string
+		want  error
+	}{
+		{
+			name:  "wrong algorithm",
+			token: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0Ml9leGFtcGxlIiwiZXhwIjoyNTI0NjA4MDAwfQ.dRzzfc9GmzyqfAbl6n_C55JJueraXk9pp3v0UYXw0ic6W_9RVa7aA1zJWm7slX9lbuYldwUtHvqaSsOpjF34uqr0-yMoRDVpIrbkwwJkNuAE8kbXGYFmXf3Ip25wMHtSXn64y2gJN8TtgAAnzjjGs9yzK9BhHILCDZTtmPbsUepxKmWTiEX2BdurUMZzinbcvcKY4Rb_Fl0pwsmBJFs7nmk5PvTyC6qivCd8ZmMc7dwL47mwy_7ouqdqKyUEdLoTEQ_psuy9REw57PRe00XCHaTSTRDCLmy4gAN6J0J056XoRHLfFcNbtzAmqmtJ_D9HGIIXPKq-KaggwK9I4qLX7g`,
+			want:  jwt.ErrTokenSignatureInvalid,
+		},
+		{
+			name:  "invalid signature",
+			token: `eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0Ml9leGFtcGxlIiwiZXhwIjoyNTI0NjA4MDAwfQ.foobar`,
+			want:  jwt.ErrTokenSignatureInvalid,
+		},
+	}
+
+	for _, _c := range cases {
+		c := _c
+		t.Run(c.name, func(t *testing.T) {
+			if _, err := impl.ValidateToken(c.token); !errors.Is(err, c.want) {
+				t.Errorf("error mismatch: want %v, got %v", c.want, err)
+
+			}
+		})
+	}
+}
 
 const (
 	testPubKeyPEM = `-----BEGIN PUBLIC KEY-----
@@ -27,7 +89,7 @@ func TestFingerprint(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unable to parse pub key from PEM: %v", err)
 	}
-	fingerprint, err := edgecontext.RSAPublicKeyFingerprint(pubKey)
+	fingerprint, err := RSAPublicKeyFingerprint(pubKey)
 	if err != nil {
 		t.Errorf("Unable to calculate fingerprint from pub key: %v", err)
 	}

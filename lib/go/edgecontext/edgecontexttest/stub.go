@@ -3,11 +3,12 @@ package edgecontexttest
 import (
 	"time"
 
-	"github.com/reddit/edgecontext/lib/go/ecdata"
+	"github.com/reddit/edgecontext/lib/go/edgecontext"
 )
 
-type StubDataSource struct {
-	token *ecdata.AuthenticationToken
+// StubHeaderUnmarshaler is a stub implementation of edgecontext.HeaderUnmarshaler that can be used in tests.
+type StubHeaderUnmarshaler struct {
+	token *edgecontext.AuthenticationToken
 
 	countryCode   string
 	localeCode    string
@@ -20,8 +21,9 @@ type StubDataSource struct {
 	cookieCreatedAt time.Time
 }
 
-func (s *StubDataSource) Populate(data *ecdata.Data) {
-	data.AuthenticationToken = func() *ecdata.AuthenticationToken {
+// Unmarshal function sets the fields of the provided edgecontext.Data.
+func (s *StubHeaderUnmarshaler) Unmarshal(data *edgecontext.Data) {
+	data.AuthenticationToken = func() *edgecontext.AuthenticationToken {
 		return s.token
 	}
 	data.CountryCode = s.countryCode
@@ -34,6 +36,7 @@ func (s *StubDataSource) Populate(data *ecdata.Data) {
 	data.InsecureCookieCreatedAt = s.cookieCreatedAt
 }
 
-func (s *StubDataSource) Header() string {
+// Header is always returns an empty string in this stub implementation.
+func (s *StubHeaderUnmarshaler) Header() string {
 	return ""
 }

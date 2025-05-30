@@ -7,7 +7,6 @@ import (
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/reddit/baseplate.go/experiments"
 	"github.com/reddit/baseplate.go/timebp"
-	"github.com/reddit/edgecontext/lib/go/ecdata"
 )
 
 const userPrefix = "t2_"
@@ -15,7 +14,7 @@ const userPrefix = "t2_"
 // An User wraps *EdgeRequestContext and provides info about a logged in or
 // logged our user.
 type User struct {
-	data func() ecdata.Data
+	data func() Data
 }
 
 // ID returns the authenticated account id of the user.
