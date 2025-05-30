@@ -157,5 +157,5 @@ func Want(opts ...WantOption) *edgecontext.EdgeRequestContext {
 	for _, opt := range opts {
 		opt(&cfg)
 	}
-	return edgecontext.NewFromSource(context.Background(), cfg.source)
+	return edgecontext.NewFromHeaderUnmarshaler(context.Background(), cfg.source)
 }

@@ -41,14 +41,14 @@ func defaultBackend() *Backend {
 			if ec == nil {
 				return ctx
 			}
-			return v0SetEdgeContext(ctx, ec.Source().(*v0HeaderUnmarshaler))
+			return v0SetEdgeContext(ctx, ec.HeaderUnmarshaler().(*v0HeaderUnmarshaler))
 		},
 		Get: func(ctx context.Context) (*EdgeRequestContext, bool) {
 			source, ok := v0GetEdgeContext(ctx)
 			if !ok {
 				return nil, false
 			}
-			return NewFromSource(ctx, source), true
+			return NewFromHeaderUnmarshaler(ctx, source), true
 		},
 		Factory: func(cfg Config) ecinterface.Factory {
 			return v0Factory(Config{
@@ -67,7 +67,7 @@ func defaultBackend() *Backend {
 			if !ok {
 				return nil, fmt.Errorf("unwrapped interface is not a v0Impl")
 			}
-			source, err := v0New(
+			unmarshaler, err := v0New(
 				ctx,
 				unwrapped,
 				NewArgs{
@@ -83,23 +83,23 @@ func defaultBackend() *Backend {
 				},
 			)
 			if err != nil {
-				return nil, fmt.Errorf("creating v0 data Source: %w", err)
+				return nil, fmt.Errorf("creating v0 HeaderUnmarshaler: %w", err)
 			}
-			return NewFromSource(ctx, source), nil
+			return NewFromHeaderUnmarshaler(ctx, unmarshaler), nil
 		},
 		FromHeader: func(ctx context.Context, header string, impl *Impl) (*EdgeRequestContext, error) {
 			unwrapped, ok := impl.Interface.(*v0Impl)
 			if !ok {
 				return nil, fmt.Errorf("unwrapped interface is not a v0Impl")
 			}
-			source, err := v0FromHeader(ctx, header, unwrapped)
+			unmarshaler, err := v0FromHeader(ctx, header, unwrapped)
 			if err != nil {
-				return nil, fmt.Errorf("creating v0 data Source: %w", err)
+				return nil, fmt.Errorf("creating v0 HeaderUnmarshaler: %w", err)
 			}
-			if source == nil {
+			if unmarshaler == nil {
 				return nil, nil
 			}
-			return NewFromSource(ctx, source), nil
+			return NewFromHeaderUnmarshaler(ctx, unmarshaler), nil
 		},
 	}
 }

@@ -12,7 +12,7 @@ import (
 
 // An EdgeRequestContext contains context info about an edge request.
 type EdgeRequestContext struct {
-	source HeaderUnmarshaler
+	unmarshaler HeaderUnmarshaler
 
 	data func() Data
 
@@ -27,12 +27,12 @@ type EdgeRequestContext struct {
 	ctx context.Context
 }
 
-func NewFromSource(ctx context.Context, source HeaderUnmarshaler) *EdgeRequestContext {
+func NewFromHeaderUnmarshaler(ctx context.Context, source HeaderUnmarshaler) *EdgeRequestContext {
 	if source == nil {
 		return nil
 	}
 	return &EdgeRequestContext{
-		source: source,
+		unmarshaler: source,
 		data: sync.OnceValue(func() Data {
 			var data Data
 			source.Unmarshal(&data)
@@ -42,8 +42,8 @@ func NewFromSource(ctx context.Context, source HeaderUnmarshaler) *EdgeRequestCo
 	}
 }
 
-func (e *EdgeRequestContext) Source() HeaderUnmarshaler {
-	return e.source
+func (e *EdgeRequestContext) HeaderUnmarshaler() HeaderUnmarshaler {
+	return e.unmarshaler
 }
 
 func (e *EdgeRequestContext) getCtx() context.Context {
@@ -67,7 +67,7 @@ func (e *EdgeRequestContext) AuthToken() *AuthenticationToken {
 // This is not really intended to be used directly but to allow us to propogate
 // the header between services.
 func (e *EdgeRequestContext) Header() string {
-	return e.Source().Header()
+	return e.HeaderUnmarshaler().Header()
 }
 
 // SessionID returns the session id of this request.
