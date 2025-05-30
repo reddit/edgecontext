@@ -21,6 +21,7 @@ type HeaderUnmarshaler interface {
 	Unmarshal(data *Data)
 }
 
+// Data contains the unmarshaled data from the edge context header.
 type Data struct {
 	AuthenticationToken func() *AuthenticationToken
 	CountryCode         string
@@ -95,7 +96,9 @@ func Factory(cfg Config) ecinterface.Factory {
 //
 // It also calls ecinterface.Set to store the implementation created globally.
 func Init(cfg Config) *Impl {
-	return getBackend().Init(cfg)
+	return &Impl{
+		Interface: getBackend().Init(cfg),
+	}
 }
 
 // NewArgs are the args for New function.

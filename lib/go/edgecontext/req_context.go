@@ -27,6 +27,7 @@ type EdgeRequestContext struct {
 	ctx context.Context
 }
 
+// NewFromHeaderUnmarshaler returns a new EdgeRequestContext that uses the given HeaderUnmarshaler to extract its data.
 func NewFromHeaderUnmarshaler(ctx context.Context, source HeaderUnmarshaler) *EdgeRequestContext {
 	if source == nil {
 		return nil
@@ -42,6 +43,9 @@ func NewFromHeaderUnmarshaler(ctx context.Context, source HeaderUnmarshaler) *Ed
 	}
 }
 
+// HeaderUnmarshaler returns the HeaderUnmarshaler used by this EdgeRequestContext.
+//
+// This is used by Backend implementations rather than something that should be used directly.
 func (e *EdgeRequestContext) HeaderUnmarshaler() HeaderUnmarshaler {
 	return e.unmarshaler
 }

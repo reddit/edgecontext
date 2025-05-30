@@ -273,6 +273,9 @@ func NewRunner(t *testing.T, opts ...RunnerOption) *Runner {
 	}
 	if cfg.backend != nil && !cfg.useDefaultBackend {
 		edgecontext.SetBackend(cfg.backend)
+		t.Cleanup(func() {
+			edgecontext.SetBackend(edgecontext.V0Backend())
+		})
 	} else if cfg.backend == nil && cfg.useDefaultBackend {
 		// nothing to do here, this is just to simplify the configuration
 		// check code and make it clear what cases are valid.
