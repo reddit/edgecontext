@@ -2,8 +2,8 @@ package edgecontext
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"log/slog"
 	"sync"
 
 	"github.com/gofrs/uuid"
@@ -12,15 +12,9 @@ import (
 
 // An EdgeRequestContext contains context info about an edge request.
 type EdgeRequestContext struct {
-	impl *Impl
+	unmarshaler HeaderUnmarshaler
 
-	// header and raw should always be set during initialization
-	header string
-	raw    NewArgs
-
-	// token will be validated on first use
-	tokenOnce sync.Once
-	token     *AuthenticationToken
+	data func() Data
 
 	// ctx is only used in error logging in AuthToken and UpdateExperimentEvent
 	// functions.
@@ -31,6 +25,29 @@ type EdgeRequestContext struct {
 	// and could help us avoiding the awkward situation of needing to pass in ctx
 	// object into those functions.
 	ctx context.Context
+}
+
+// NewFromHeaderUnmarshaler returns a new EdgeRequestContext that uses the given HeaderUnmarshaler to extract its data.
+func NewFromHeaderUnmarshaler(ctx context.Context, source HeaderUnmarshaler) *EdgeRequestContext {
+	if source == nil {
+		return nil
+	}
+	return &EdgeRequestContext{
+		unmarshaler: source,
+		data: sync.OnceValue(func() Data {
+			var data Data
+			source.Unmarshal(&data)
+			return data
+		}),
+		ctx: ctx,
+	}
+}
+
+// HeaderUnmarshaler returns the HeaderUnmarshaler used by this EdgeRequestContext.
+//
+// This is used by Backend implementations rather than something that should be used directly.
+func (e *EdgeRequestContext) HeaderUnmarshaler() HeaderUnmarshaler {
+	return e.unmarshaler
 }
 
 func (e *EdgeRequestContext) getCtx() context.Context {
@@ -45,18 +62,7 @@ func (e *EdgeRequestContext) getCtx() context.Context {
 //
 // If the validation failed, the error will be logged.
 func (e *EdgeRequestContext) AuthToken() *AuthenticationToken {
-	e.tokenOnce.Do(func() {
-		if token, err := e.impl.ValidateToken(e.raw.AuthToken); err != nil {
-			// empty jwt token is considered "normal", no need to spam them in logs.
-			if !errors.Is(err, ErrEmptyToken) {
-				e.impl.logger.Log(e.getCtx(), "token validation failed: "+err.Error())
-			}
-			e.token = nil
-		} else {
-			e.token = token
-		}
-	})
-	return e.token
+	return e.data().AuthenticationToken()
 }
 
 // Header returns the raw, underlying edge request context header that was
@@ -65,41 +71,41 @@ func (e *EdgeRequestContext) AuthToken() *AuthenticationToken {
 // This is not really intended to be used directly but to allow us to propogate
 // the header between services.
 func (e *EdgeRequestContext) Header() string {
-	return e.header
+	return e.HeaderUnmarshaler().Header()
 }
 
 // SessionID returns the session id of this request.
 func (e *EdgeRequestContext) SessionID() string {
-	return e.raw.SessionID
+	return e.data().SessionID
 }
 
 // DeviceID returns the device id of this request.
 func (e *EdgeRequestContext) DeviceID() string {
-	return e.raw.DeviceID
+	return e.data().DeviceID
 }
 
 // User returns the info about the user of this request.
 func (e *EdgeRequestContext) User() User {
 	return User{
-		e: e,
+		data: e.data,
 	}
 }
 
 // CountryCode returns the two-character ISO 3166-1 country code where the
 // request orginated from.
 func (e *EdgeRequestContext) CountryCode() string {
-	return e.raw.CountryCode
+	return e.data().CountryCode
 }
 
 // LocaleCode returns the IETF language code for the client
 func (e *EdgeRequestContext) LocaleCode() string {
-	return e.raw.LocaleCode
+	return e.data().LocaleCode
 }
 
 // OriginService returns the info about the origin of this request.
 func (e *EdgeRequestContext) OriginService() OriginService {
 	return OriginService{
-		raw: e.raw,
+		data: e.data,
 	}
 }
 
@@ -149,11 +155,11 @@ func (e *EdgeRequestContext) UpdateExperimentEvent(ee *experiments.ExperimentEve
 		ee.DeviceID, err = uuid.FromString(deviceID)
 		if err != nil {
 			ee.DeviceID = uuid.Nil
-			e.impl.logger.Log(e.getCtx(), fmt.Sprintf(
-				"Failed to parse device id %q into uuid: %v",
-				deviceID,
-				err,
-			))
+			slog.ErrorContext(
+				e.getCtx(),
+				fmt.Sprintf("Failed to parse device id %q into uuid", deviceID),
+				"err", err,
+			)
 		}
 	} else {
 		ee.DeviceID = uuid.Nil
@@ -162,15 +168,15 @@ func (e *EdgeRequestContext) UpdateExperimentEvent(ee *experiments.ExperimentEve
 
 // OriginService holds metadata about the origin of the request.
 type OriginService struct {
-	raw NewArgs
+	data func() Data
 }
 
 // Name returns the name of the service that serves as the origin of the request.
 func (os OriginService) Name() string {
-	return os.raw.OriginServiceName
+	return os.data().OriginServiceName
 }
 
 // RequestID is the id of this request.
 func (e *EdgeRequestContext) RequestID() string {
-	return e.raw.RequestID
+	return e.data().RequestID
 }

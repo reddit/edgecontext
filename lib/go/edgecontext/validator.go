@@ -5,9 +5,9 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/reddit/baseplate.go/log"
 	"github.com/reddit/baseplate.go/secrets"
 	"golang.org/x/crypto/ssh"
 )
@@ -60,7 +60,7 @@ var (
 
 // ValidateToken parses and validates a jwt token, and return the decoded
 // AuthenticationToken.
-func (impl *Impl) ValidateToken(token string) (*AuthenticationToken, error) {
+func (impl *v0Impl) ValidateToken(token string) (*AuthenticationToken, error) {
 	keys, ok := impl.keysValue.Load().(*keysType)
 	if !ok {
 		// This would only happen when all previous middleware parsing failed.
@@ -102,28 +102,31 @@ func (impl *Impl) ValidateToken(token string) (*AuthenticationToken, error) {
 	return nil, fmt.Errorf("%w: %T", ErrInvalidTokenType, tok.Claims)
 }
 
-func (impl *Impl) validatorMiddleware(next secrets.SecretHandlerFunc) secrets.SecretHandlerFunc {
+func (impl *v0Impl) validatorMiddleware(next secrets.SecretHandlerFunc) secrets.SecretHandlerFunc {
 	return func(sec *secrets.Secrets) {
 		defer next(sec)
 
 		versioned, err := sec.GetVersionedSecret(authenticationPubKeySecretPath)
 		if err != nil {
-			impl.logger.Log(context.Background(), fmt.Sprintf(
-				"Failed to get secrets %q: %v",
-				authenticationPubKeySecretPath,
-				err,
-			))
+			slog.ErrorContext(
+				context.Background(),
+				fmt.Sprintf(
+					"Failed to get secrets %q",
+					authenticationPubKeySecretPath,
+				),
+				"err", err,
+			)
 			return
 		}
 
-		keys := parseVersionedKeys(context.Background(), versioned, impl.logger)
+		keys := parseVersionedKeys(context.Background(), versioned)
 		if keys != nil {
 			impl.keysValue.Store(keys)
 		}
 	}
 }
 
-func parseVersionedKeys(ctx context.Context, versioned secrets.VersionedSecret, logger log.Wrapper) *keysType {
+func parseVersionedKeys(ctx context.Context, versioned secrets.VersionedSecret) *keysType {
 	all := versioned.GetAll()
 	keys := &keysType{
 		m: make(map[string]*rsa.PublicKey, len(all)),
@@ -131,28 +134,26 @@ func parseVersionedKeys(ctx context.Context, versioned secrets.VersionedSecret, 
 	for i, v := range all {
 		key, err := jwt.ParseRSAPublicKeyFromPEM([]byte(v))
 		if err != nil {
-			logger.Log(ctx, fmt.Sprintf(
-				"Failed to parse key #%d: %v",
-				i,
-				err,
-			))
+			slog.ErrorContext(
+				ctx, fmt.Sprintf("Failed to parse key #%d", i),
+				"err", err,
+			)
 		} else {
 			if keys.first == nil {
 				keys.first = key
 			}
 			if fingerprint, err := RSAPublicKeyFingerprint(key); err != nil {
-				logger.Log(ctx, fmt.Sprintf(
-					"Failed to get fingerprint of key #%d: %v",
-					i,
-					err,
-				))
+				slog.ErrorContext(
+					ctx, fmt.Sprintf("Failed to get fingerprint of key #%d", i),
+					"err", err,
+				)
 			} else {
 				keys.m[fingerprint] = key
 			}
 		}
 	}
 	if keys.first == nil {
-		logger.Log(ctx, "No valid keys in secrets store.")
+		slog.InfoContext(ctx, "No valid keys in secrets store.")
 		return nil
 	}
 	return keys

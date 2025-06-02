@@ -14,14 +14,14 @@ const userPrefix = "t2_"
 // An User wraps *EdgeRequestContext and provides info about a logged in or
 // logged our user.
 type User struct {
-	e *EdgeRequestContext
+	data func() Data
 }
 
 // ID returns the authenticated account id of the user.
 //
 // ok will be false if the user is not logged in.
 func (u User) ID() (id string, ok bool) {
-	token := u.e.AuthToken()
+	token := u.data().AuthenticationToken()
 	if token == nil {
 		return
 	}
@@ -45,12 +45,12 @@ func (u User) LoID() (loid string, ok bool) {
 	}
 
 	// Then, we use the loid from the thrift payload.
-	if u.e.raw.LoID != "" {
-		return u.e.raw.LoID, true
+	if insecure := u.data().InsecureLoID; insecure != "" {
+		return insecure, true
 	}
 
 	// Finally, we fallback to the loid from the JWT token.
-	token := u.e.AuthToken()
+	token := u.data().AuthenticationToken()
 	if token == nil {
 		return
 	}
@@ -59,10 +59,10 @@ func (u User) LoID() (loid string, ok bool) {
 
 // CookieCreatedAt returns the time the cookie was created.
 func (u User) CookieCreatedAt() (ts time.Time, ok bool) {
-	if !u.e.raw.LoIDCreatedAt.IsZero() {
-		return u.e.raw.LoIDCreatedAt, true
+	if insecure := u.data().InsecureCookieCreatedAt; !insecure.IsZero() {
+		return insecure, true
 	}
-	token := u.e.AuthToken()
+	token := u.data().AuthenticationToken()
 	if token == nil {
 		return
 	}
@@ -72,7 +72,7 @@ func (u User) CookieCreatedAt() (ts time.Time, ok bool) {
 
 // Roles returns the roles the user has.
 func (u User) Roles() []string {
-	token := u.e.AuthToken()
+	token := u.data().AuthenticationToken()
 	if token == nil {
 		return nil
 	}
@@ -81,13 +81,9 @@ func (u User) Roles() []string {
 
 // HasRole returns true if the user has the specific role.
 func (u User) HasRole(role string) bool {
-	token := u.e.AuthToken()
-	if token == nil {
-		return false
-	}
 	// Since in most cases the roles slice would be quite small,
 	// it's better to iterate them than converting the slice into a set.
-	for _, r := range token.Roles {
+	for _, r := range u.Roles() {
 		if strings.EqualFold(role, r) {
 			return true
 		}

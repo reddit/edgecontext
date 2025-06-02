@@ -3,36 +3,38 @@ package edgecontext
 import (
 	"context"
 	"errors"
-	"fmt"
 	"regexp"
-	"strings"
-	"sync/atomic"
 	"time"
 
-	"github.com/apache/thrift/lib/go/thrift"
-	"github.com/reddit/baseplate.go/detach"
 	"github.com/reddit/baseplate.go/ecinterface"
 	"github.com/reddit/baseplate.go/log"
 	"github.com/reddit/baseplate.go/secrets"
-	"github.com/reddit/baseplate.go/timebp"
-
-	ecthrift "github.com/reddit/edgecontext/lib/go/internal/reddit/edgecontext"
 )
 
-func init() {
-	copyEC := func(dst, src context.Context) context.Context {
-		if ec, ok := GetEdgeContext(src); ok {
-			dst = SetEdgeContext(dst, ec)
-		}
-		return dst
-	}
+// HeaderUnmarshaler is responsible for unmarshaling the edge context header into a Data struct.
+type HeaderUnmarshaler interface {
+	// Header returns the raw header string that can be unmarshaled.
+	Header() string
 
-	detach.Register(detach.Hooks{
-		Inline: copyEC,
-		Async: func(dst, src context.Context, next func(ctx context.Context)) {
-			next(copyEC(dst, src))
-		},
-	})
+	// Unmarshal unmarshals the header into the provided Data struct. An EdgeRequestContext will only call Unmarshal once and
+	// cache the result.
+	Unmarshal(data *Data)
+}
+
+// Data contains the unmarshaled data from the edge context header.
+type Data struct {
+	AuthenticationToken func() *AuthenticationToken
+	CountryCode         string
+	DeviceID            string
+	LocaleCode          string
+	RequestID           string
+	SessionID           string
+	OriginServiceName   string
+
+	// InsecureLoID is the LoID from the loid cookie/header rather than the one from the auth token.
+	InsecureLoID string
+	// InsecureCookieCreatedAt is the created time of the LoID cookie/header rather than the one from the auth token.
+	InsecureCookieCreatedAt time.Time
 }
 
 // LoIDPrefix is the prefix for all LoIDs.
@@ -58,62 +60,28 @@ var (
 //
 // Please call Init function to initialize it.
 type Impl struct {
-	store     *secrets.Store
-	logger    log.Wrapper
-	keysValue atomic.Value
+	ecinterface.Interface
 }
-
-var _ ecinterface.Interface = (*Impl)(nil)
-
-// ContextToHeader implements ecinterface.Interface.
-func (impl *Impl) ContextToHeader(ctx context.Context) (header string, ok bool) {
-	ec, ok := GetEdgeContext(ctx)
-	if !ok {
-		return "", false
-	}
-	return ec.Header(), true
-}
-
-// HeaderToContext implements ecinterface.Interface.
-func (impl *Impl) HeaderToContext(ctx context.Context, header string) (context.Context, error) {
-	ec, err := FromHeader(ctx, header, impl)
-	if err != nil {
-		return ctx, fmt.Errorf("edgecontext.Impl.HeaderToContext: failed to parse header: %w", err)
-	}
-	return SetEdgeContext(ctx, ec), nil
-}
-
-var (
-	serializerPool   = thrift.NewTSerializerPoolSizeFactory(1024, thrift.NewTBinaryProtocolFactoryDefault())
-	deserializerPool = thrift.NewTDeserializerPoolSizeFactory(1024, thrift.NewTBinaryProtocolFactoryDefault())
-)
-
-type contextKey int
-
-const (
-	edgeContextKey contextKey = iota
-)
 
 // SetEdgeContext sets the given EdgeRequestContext on the context object.
 func SetEdgeContext(ctx context.Context, ec *EdgeRequestContext) context.Context {
-	if ec == nil {
-		return ctx
-	}
-	return context.WithValue(ctx, edgeContextKey, ec)
+	return getBackend().Set(ctx, ec)
 }
 
 // GetEdgeContext gets the current EdgeRequestContext from the context object,
 // if set.
-func GetEdgeContext(ctx context.Context) (ec *EdgeRequestContext, ok bool) {
-	ec, ok = ctx.Value(edgeContextKey).(*EdgeRequestContext)
-	return
+func GetEdgeContext(ctx context.Context) (*EdgeRequestContext, bool) {
+	return getBackend().Get(ctx)
 }
 
 // Config for Init function.
 type Config struct {
 	// The secret store to get the keys for jwt validation
 	Store *secrets.Store
+
 	// The logger to log key decoding errors
+	//
+	// deprecated: this is not used internally, slog should be used instead
 	Logger log.Wrapper
 }
 
@@ -121,23 +89,16 @@ type Config struct {
 //
 // The Store in cfg will be replaced by the Factory arg.
 func Factory(cfg Config) ecinterface.Factory {
-	return func(args ecinterface.FactoryArgs) (ecinterface.Interface, error) {
-		cfg.Store = args.Store
-		return Init(cfg), nil
-	}
+	return getBackend().Factory(cfg)
 }
 
 // Init intializes an Impl.
 //
 // It also calls ecinterface.Set to store the implementation created globally.
 func Init(cfg Config) *Impl {
-	impl := &Impl{
-		store:  cfg.Store,
-		logger: cfg.Logger,
+	return &Impl{
+		Interface: getBackend().Init(cfg),
 	}
-	impl.store.AddMiddlewares(impl.validatorMiddleware)
-	ecinterface.Set(impl)
-	return impl
 }
 
 // NewArgs are the args for New function.
@@ -168,105 +129,11 @@ type NewArgs struct {
 // This function should be used by services on the edge talking to clients
 // directly, after talked to authentication service to get the auth token.
 func New(ctx context.Context, impl *Impl, args NewArgs) (*EdgeRequestContext, error) {
-	request := ecthrift.NewRequest()
-	if args.LoID != "" {
-		if !strings.HasPrefix(args.LoID, userPrefix) {
-			return nil, ErrLoIDWrongPrefix
-		}
-		request.Loid = &ecthrift.Loid{
-			ID:        args.LoID,
-			CreatedMs: timebp.TimeToMilliseconds(args.LoIDCreatedAt),
-		}
-	}
-	if args.SessionID != "" {
-		request.Session = &ecthrift.Session{
-			ID: args.SessionID,
-		}
-	}
-	if args.DeviceID != "" {
-		request.Device = &ecthrift.Device{
-			ID: args.DeviceID,
-		}
-	}
-	if args.OriginServiceName != "" {
-		request.OriginService = &ecthrift.OriginService{
-			Name: args.OriginServiceName,
-		}
-	}
-	if args.CountryCode != "" {
-		request.Geolocation = &ecthrift.Geolocation{
-			CountryCode: ecthrift.CountryCode(args.CountryCode),
-		}
-	}
-	if args.RequestID != "" {
-		request.RequestID = &ecthrift.RequestId{
-			ReadableID: args.RequestID,
-		}
-	}
-	if args.LocaleCode != "" {
-		if !LocaleRegex.MatchString(args.LocaleCode) {
-			return nil, ErrInvalidLocaleCode
-		}
-		request.Locale = &ecthrift.Locale{
-			LocaleCode: ecthrift.LocaleCode(args.LocaleCode),
-		}
-	}
-
-	request.AuthenticationToken = ecthrift.AuthenticationToken(args.AuthToken)
-
-	header, err := serializerPool.WriteString(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-	return &EdgeRequestContext{
-		impl:   impl,
-		header: header,
-		raw:    args,
-		ctx:    ctx,
-	}, nil
+	return getBackend().New(ctx, impl, args)
 }
 
 // FromHeader returns a new EdgeRequestContext from the given header string
 // using the given Impl.
 func FromHeader(ctx context.Context, header string, impl *Impl) (*EdgeRequestContext, error) {
-	if header == "" {
-		return nil, nil
-	}
-
-	request := ecthrift.NewRequest()
-	if err := deserializerPool.ReadString(ctx, request, header); err != nil {
-		return nil, err
-	}
-
-	raw := NewArgs{
-		AuthToken: string(request.AuthenticationToken),
-	}
-	if request.Session != nil {
-		raw.SessionID = request.Session.ID
-	}
-	if request.Device != nil {
-		raw.DeviceID = request.Device.ID
-	}
-	if request.Loid != nil {
-		raw.LoID = request.Loid.ID
-		raw.LoIDCreatedAt = timebp.MillisecondsToTime(request.Loid.CreatedMs)
-	}
-	if request.OriginService != nil {
-		raw.OriginServiceName = request.OriginService.Name
-	}
-	if request.Geolocation != nil {
-		raw.CountryCode = string(request.Geolocation.CountryCode)
-	}
-	if request.RequestID != nil {
-		raw.RequestID = request.RequestID.ReadableID
-	}
-	if request.Locale != nil {
-		raw.LocaleCode = string(request.Locale.LocaleCode)
-	}
-	return &EdgeRequestContext{
-		impl:   impl,
-		header: header,
-		raw:    raw,
-		ctx:    ctx,
-	}, nil
+	return getBackend().FromHeader(ctx, header, impl)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/reddit/baseplate.go/log"
 	"github.com/reddit/baseplate.go/secrets"
 )
 
@@ -145,13 +144,7 @@ func TestParseVersionedKeys(t *testing.T) {
 		},
 	} {
 		t.Run(c.label, func(t *testing.T) {
-			var logger log.Wrapper
-			if c.nopLogger {
-				logger = log.NopWrapper
-			} else {
-				logger = log.TestWrapper(t)
-			}
-			keys := parseVersionedKeys(context.Background(), c.secret, logger)
+			keys := parseVersionedKeys(context.Background(), c.secret)
 			if c.expectNil {
 				if keys != nil {
 					t.Errorf("Expected nil result, got %v", keys)

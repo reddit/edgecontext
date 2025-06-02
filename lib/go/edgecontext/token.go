@@ -9,8 +9,6 @@ import (
 type AuthenticationToken struct {
 	jwt.RegisteredClaims
 
-	// NOTE: Subject field is in StandardClaims.
-
 	Roles []string `json:"roles,omitempty"`
 
 	OAuthClientID   string   `json:"client_id,omitempty"`

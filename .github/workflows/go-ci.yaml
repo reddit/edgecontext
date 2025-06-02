@@ -15,13 +15,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: [1.18.2-buster]
+        go-version: ["1.23"]
 
     container:
       image: golang:${{ matrix.go-version }}
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: Workaround Git Security Warning
+        run: |
+          # Workaround a bug in github actions:
+          # https://github.com/actions/runner-images/issues/6775.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Install dependencies
         run: |
