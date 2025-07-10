@@ -101,6 +101,20 @@ func Init(cfg Config) *Impl {
 	}
 }
 
+func (i *Impl) ValidateToken(token string) (*AuthenticationToken, error) {
+	ec, err := New(context.Background(), i, NewArgs{
+		AuthToken: token,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ec.AuthToken(), nil
+}
+
+func (i *Impl) FromHeader(ctx context.Context, header string) (*EdgeRequestContext, error) {
+	return getBackend().FromHeader(ctx, header, i)
+}
+
 // NewArgs are the args for New function.
 //
 // All fields are optional.
