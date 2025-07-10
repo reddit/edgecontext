@@ -101,6 +101,8 @@ func Init(cfg Config) *Impl {
 	}
 }
 
+// ValidateToken parses and validates a jwt token, and return the decoded
+// AuthenticationToken.
 func (i *Impl) ValidateToken(token string) (*AuthenticationToken, error) {
 	ec, err := New(context.Background(), i, NewArgs{
 		AuthToken: token,
@@ -109,10 +111,6 @@ func (i *Impl) ValidateToken(token string) (*AuthenticationToken, error) {
 		return nil, err
 	}
 	return ec.AuthToken(), nil
-}
-
-func (i *Impl) FromHeader(ctx context.Context, header string) (*EdgeRequestContext, error) {
-	return getBackend().FromHeader(ctx, header, i)
 }
 
 // NewArgs are the args for New function.
