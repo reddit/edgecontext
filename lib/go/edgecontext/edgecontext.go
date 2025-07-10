@@ -101,6 +101,18 @@ func Init(cfg Config) *Impl {
 	}
 }
 
+// ValidateToken parses and validates a jwt token, and return the decoded
+// AuthenticationToken.
+func (i *Impl) ValidateToken(token string) (*AuthenticationToken, error) {
+	ec, err := New(context.Background(), i, NewArgs{
+		AuthToken: token,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ec.AuthToken(), nil
+}
+
 // NewArgs are the args for New function.
 //
 // All fields are optional.
