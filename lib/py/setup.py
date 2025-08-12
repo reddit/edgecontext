@@ -17,7 +17,7 @@ setup(
         "relative_to": __file__,
     },
     packages=find_packages(),
-    python_requires=">=3.7",
+    python_requires=">=3.9",
     setup_requires=["setuptools_scm"],
     install_requires=[
         "baseplate>=1.5,<3.0",
