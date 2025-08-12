@@ -22,7 +22,7 @@ setup(
     install_requires=[
         "baseplate>=1.5,<3.0",
         "pyjwt>=2.0.0,<3.0",
-        "thrift-unofficial>=0.14,<1.0",
+        "thrift>=0.14,<1.0",
         "cryptography>=3.0",
     ],
     package_data={"reddit_edgecontext": ["py.typed"]},
