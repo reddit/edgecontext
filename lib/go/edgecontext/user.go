@@ -11,6 +11,63 @@ import (
 
 const userPrefix = "t2_"
 
+// UserType distinguishes between different types of AuthenticationTokens.
+type UserType string
+
+const (
+	// UnknownUserType indicates that this library does not recognize the type of
+	// subject identified by the authentication token.
+	UnknownUserType UserType = "unknown"
+
+	// LoggedInUser indicates that the user is logged in.
+	LoggedInUser UserType = "logged_in_user"
+
+	// LoggedOutUser indicates that the user is logged out.
+	LoggedOutUser UserType = "logged_out_user"
+
+	// LiteUser indicates that the user has not yet signed up, but has the ability to perform
+	// certain write actions that historically have only been available to logged-in users.
+	// They are considered "logged out" for backwards compatibility.
+	LiteUser UserType = "lite_user"
+)
+
+func (at UserType) String() string {
+	if at == "" {
+		return "unknown"
+	}
+	return string(at)
+}
+
+// AccountType corresponds to the account_type field of the database account
+// It can have be present for both logged-in and logged-out users.
+const (
+	AccountTypeLite = "LITE"
+)
+
+// UserType returns the authentication type of this user, or UnknownUserType if it is not recognized.
+func (u User) UserType() UserType {
+	if u.IsLoggedIn() {
+		return LoggedInUser
+	}
+
+	if _, ok := u.LoID(); ok {
+		if u.accountType() == AccountTypeLite {
+			return LiteUser
+		}
+		return LoggedOutUser
+	}
+
+	return UnknownUserType
+}
+
+func (u User) accountType() string {
+	token := u.data().AuthenticationToken()
+	if token == nil {
+		return ""
+	}
+	return token.AccountType
+}
+
 // An User wraps *EdgeRequestContext and provides info about a logged in or
 // logged our user.
 type User struct {

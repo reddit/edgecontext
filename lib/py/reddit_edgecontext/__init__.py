@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import re
 
+from enum import Enum
 from typing import Any
 from typing import Dict
 from typing import List
@@ -118,6 +119,10 @@ class AuthenticationToken:
         raise NotImplementedError
 
     @property
+    def account_type(self) -> Optional[str]:
+        raise NotImplementedError
+
+    @property
     def on_behalf_of_id(self) -> Optional[str]:
         raise NotImplementedError
 
@@ -163,6 +168,10 @@ class ValidatedAuthenticationToken(AuthenticationToken):
         return (self.payload.get("loid") or {}).get("created_ms")
 
     @property
+    def account_type(self) -> Optional[str]:
+        return self.payload.get("account_type")
+
+    @property
     def on_behalf_of_id(self) -> Optional[str]:
         return (self.payload.get("obo") or {}).get("aid")
 
@@ -202,6 +211,10 @@ class InvalidAuthenticationToken(AuthenticationToken):
 
     @property
     def loid_created_ms(self) -> Optional[int]:
+        raise NoAuthenticationError
+
+    @property
+    def account_type(self) -> Optional[str]:
         raise NoAuthenticationError
 
     @property
@@ -261,6 +274,37 @@ class Locale(NamedTuple):
 
     locale_code: str
     """IETF language tag representing the preferred locale for the client."""
+
+
+class UserType(Enum):
+    """Enumeration of user types."""
+
+    UNKNOWN = "unknown"
+    """
+    Indicates that this library does not recognize the type of subject identified
+    by the authentication token.
+    """
+    LOGGED_IN = "logged_in"
+    """ Indicates that the user is logged in."""
+    LOGGED_OUT = "logged_out"
+    """ Indicates that the user is logged out."""
+    LITE = "lite"
+    """
+    Indicates that the user has not yet signed up, but has the ability to perform
+    certain write actions that historically have only been available to logged-in users.
+    They are considered "logged out" for backwards compatibility.
+    """
+
+
+class AccountType(Enum):
+    """
+    Enumeration of account types within the AuthenticationToken.
+
+    AccountType corresponds to the account_type field of the database account
+    It can be present for both logged-in and logged-out users.
+    """
+
+    LITE = "LITE"
 
 
 class User(NamedTuple):
@@ -356,6 +400,25 @@ class User(NamedTuple):
             pass
 
         return ""
+
+    def user_type(self) -> UserType:
+        """Return the type of user based on the authentication token."""
+        if self.is_logged_in:
+            return UserType.LOGGED_IN
+
+        if self.loid:
+            if self._account_type() == AccountType.LITE:
+                return UserType.LITE
+            return UserType.LOGGED_OUT
+
+        return UserType.UNKNOWN
+
+    def _account_type(self) -> Optional[str]:
+        """Return the account type of the user, from the authentication token."""
+        try:
+            return self.authentication_token.account_type
+        except NoAuthenticationError:
+            return None
 
 
 class OAuthClient(NamedTuple):
