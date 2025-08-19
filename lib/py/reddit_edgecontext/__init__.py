@@ -401,7 +401,7 @@ class User(NamedTuple):
 
         return ""
 
-    def user_type(self) -> UserType:
+    def type(self) -> UserType:
         """Return the type of user based on the authentication token."""
         if self.is_logged_in:
             return UserType.LOGGED_IN

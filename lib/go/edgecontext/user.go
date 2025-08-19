@@ -44,8 +44,8 @@ const (
 	AccountTypeLite = "LITE"
 )
 
-// UserType returns the authentication type of this user, or UnknownUserType if it is not recognized.
-func (u User) UserType() UserType {
+// Type returns the type of this user, or UnknownUserType if it is not recognized.
+func (u User) Type() UserType {
 	if u.IsLoggedIn() {
 		return LoggedInUser
 	}
