@@ -304,6 +304,12 @@ class AccountType(Enum):
     It can be present for both logged-in and logged-out users.
     """
 
+    UNKNOWN = "UNKNOWN"
+    USER = ""
+    PROXY = "PROXY"
+    APP = "APP"
+    BRAND = "BRAND"
+    ADS_INTEGRATION = "ADS_INTEGRATION"
     LITE = "LITE"
 
 
@@ -407,18 +413,46 @@ class User(NamedTuple):
             return UserType.LOGGED_IN
 
         if self.loid:
-            if self._account_type() == AccountType.LITE:
-                return UserType.LITE
             return UserType.LOGGED_OUT
 
         return UserType.UNKNOWN
 
-    def _account_type(self) -> Optional[str]:
+    def _account_type(self) -> Optional[AccountType]:
         """Return the account type of the user, from the authentication token."""
         try:
             return self.authentication_token.account_type
         except NoAuthenticationError:
             return None
+
+    def is_account_type(self, *account_types: AccountType) -> Optional[AccountType]:
+        """Return if the authenticated account type is one of the given types.
+
+        When checking the type of the current User, you should check
+        that the type "is" one of the allowed types rather than checking that
+        it "is not" a disallowed type.
+
+        For example::
+
+            if user.is_account_type("APP", "BRAND"):
+                ...
+
+        not::
+
+            if not user.is_account_type("USER", "PROXY"):
+                ...
+
+
+        :param account_types: Case-insensitive sequence of account type
+            names that you want to check.
+
+        :raises: :py:class:`NoAuthenticationError` if there was no
+            authentication token defined for the current context
+
+        """
+        for account_type in account_types:
+            if self._account_type() == account_type:
+                return self._account_type()
+        return None
 
 
 class OAuthClient(NamedTuple):
