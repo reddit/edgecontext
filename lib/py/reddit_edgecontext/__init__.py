@@ -425,30 +425,7 @@ class User(NamedTuple):
             return None
 
     def is_account_type(self, *account_types: AccountType) -> Optional[AccountType]:
-        """Return if the authenticated account type is one of the given types.
-
-        When checking the type of the current User, you should check
-        that the type "is" one of the allowed types rather than checking that
-        it "is not" a disallowed type.
-
-        For example::
-
-            if user.is_account_type("APP", "BRAND"):
-                ...
-
-        not::
-
-            if not user.is_account_type("USER", "PROXY"):
-                ...
-
-
-        :param account_types: Case-insensitive sequence of account type
-            names that you want to check.
-
-        :raises: :py:class:`NoAuthenticationError` if there was no
-            authentication token defined for the current context
-
-        """
+        """Return if the authenticated account type is one of the given types."""
         for account_type in account_types:
             if self._account_type() == account_type:
                 return self._account_type()
