@@ -118,6 +118,10 @@ class AuthenticationToken:
         raise NotImplementedError
 
     @property
+    def account_type(self) -> Optional[int]:
+        raise NotImplementedError
+
+    @property
     def on_behalf_of_id(self) -> Optional[str]:
         raise NotImplementedError
 
@@ -163,6 +167,10 @@ class ValidatedAuthenticationToken(AuthenticationToken):
         return (self.payload.get("loid") or {}).get("created_ms")
 
     @property
+    def account_type(self) -> Optional[int]:
+        return self.payload.get("account_type")
+
+    @property
     def on_behalf_of_id(self) -> Optional[str]:
         return (self.payload.get("obo") or {}).get("aid")
 
@@ -202,6 +210,10 @@ class InvalidAuthenticationToken(AuthenticationToken):
 
     @property
     def loid_created_ms(self) -> Optional[int]:
+        raise NoAuthenticationError
+
+    @property
+    def account_type(self) -> Optional[int]:
         raise NoAuthenticationError
 
     @property
