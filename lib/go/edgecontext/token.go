@@ -19,7 +19,7 @@ type AuthenticationToken struct {
 		ID        string                      `json:"id,omitempty"`
 		CreatedAt timebp.TimestampMillisecond `json:"created_ms,omitempty"`
 	} `json:"loid,omitempty"`
-	AccountType int64 `json:"account_type,omitempty"`
+	AccountType int32 `json:"account_type,omitempty"`
 
 	OnBehalfOf *struct {
 		AccountID string   `json:"aid,omitempty"`
